@@ -12,6 +12,7 @@
 -type bom_ref() :: string().
 -type spdx_licence_id() :: string(). % TODO: enumerate the valid SPDX licence IDs
 -type properties() :: [{string(), string()}].
+-type scope() :: required | optional | excluded.
 
 %--- Records -------------------------------------------------------------------
 
@@ -58,6 +59,7 @@
     name :: string(),
     version :: string(),
     description :: string(),
+    scope :: scope(),
     hashes = [] :: [#{alg := string(), hash := string()}],
     licenses = [] :: [#{name := string()} | #{id := string()}],
     externalReferences = [] :: [#{type := string(), url := string()}],

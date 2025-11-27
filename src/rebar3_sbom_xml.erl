@@ -64,6 +64,7 @@ component_to_xml(C) ->
         component_field_to_xml(name, C#component.name),
         component_field_to_xml(version, C#component.version),
         component_field_to_xml(description, C#component.description),
+        component_field_to_xml(scope, C#component.scope),
         component_field_to_xml(hashes, C#component.hashes),
         component_field_to_xml(licenses, C#component.licenses),
         component_field_to_xml(purl, C#component.purl),
@@ -114,6 +115,7 @@ xml_to_component(Component) ->
     Name = xpath("/component/name/text()", Component),
     Version = xpath("/component/version/text()", Component),
     Description = xpath("/component/description/text()", Component),
+    Scope = xpath("/component/scope/text()", Component),
     Purl = xpath("/component/purl/text()", Component),
     Hashes = [
         xml_to_hash(H) || H <- xpath("/component/hashes/hash", Component)
@@ -131,6 +133,7 @@ xml_to_component(Component) ->
         name = xml_to_component_field(Name),
         version = xml_to_component_field(Version),
         description = xml_to_component_field(Description),
+        scope = xml_to_component_field(Scope),
         purl = xml_to_component_field(Purl),
         hashes = replace_if_empty(Hashes),
         licenses = replace_if_empty(Licenses),

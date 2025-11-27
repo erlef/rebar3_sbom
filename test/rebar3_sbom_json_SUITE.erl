@@ -25,6 +25,13 @@
 -export([component_test/1]).
 -export([manufacturer_test/1]).
 
+% components group test cases
+-export([required_component_fields_test/1]).
+-export([scope_test/1]).
+-export([component_hashes_test/1]).
+-export([component_licenses_test/1]).
+-export([component_purl_test/1]).
+
 % basic app with SBoM group test cases
 -export([serial_number_change_test/1]).
 -export([version_increment_test/1]).
@@ -64,6 +71,7 @@ groups() -> [{basic_app, [], [required_fields_test,
                               serial_number_test,
                               version_test,
                               {group, metadata},
+                              {group, components},
                               {group, basic_app_with_sbom},
                               github_actor_test,
                               default_author_test,
@@ -76,6 +84,11 @@ groups() -> [{basic_app, [], [required_fields_test,
                              licenses_test, % TODO validate the license.id using CycloneDX list of valid SPDX license ID
                              component_test,
                              manufacturer_test]},
+             {components, [], [required_component_fields_test,
+                               scope_test,
+                               component_hashes_test,
+                               component_licenses_test,
+                               component_purl_test]},
              {basic_app_with_sbom, [], [serial_number_change_test,
                                         version_increment_test,
                                         timestamp_increases_test]}].
@@ -322,6 +335,44 @@ manufacturer_test(Config) ->
     ?assertNotMatch(#{<<"post_office_box_number">> := _}, Address),
     ?assertNotMatch(#{<<"bom-ref">> := _}, Manufacturer).
 
+%--- components group ---
+required_component_fields_test(Config) ->
+    #{<<"components">> := Components} = ?config(sbom_json, Config),
+    lists:foreach(fun(Component) ->
+        check_component_constraints(Component)
+    end, Components).
+
+scope_test(Config) ->
+    #{<<"components">> := Components} = ?config(sbom_json, Config),
+    lists:foreach(fun(Component) ->
+        #{<<"scope">> := Scope} = Component,
+        ?assertEqual(<<"required">>, Scope)
+    end, Components).
+
+component_hashes_test(Config) ->
+    #{<<"components">> := Components} = ?config(sbom_json, Config),
+    lists:foreach(fun(Component) ->
+        #{<<"hashes">> := Hashes} = Component,
+        check_hashes_constraints(Hashes)
+    end, Components).
+
+component_licenses_test(Config) ->
+    #{<<"components">> := Components} = ?config(sbom_json, Config),
+    lists:foreach(fun(Component) ->
+        #{<<"licenses">> := Licenses} = Component,
+        % All deps of basic_app have at least one license
+        ?assertNotMatch([], Licenses),
+        check_licenses_constraints(Licenses)
+    end, Components).
+
+component_purl_test(Config) ->
+    #{<<"components">> := Components} = ?config(sbom_json, Config),
+    lists:foreach(fun(Component) ->
+        #{<<"name">> := Name, <<"version">> := Version, <<"purl">> := Purl} = Component,
+        check_purl_format(Purl),
+        ?assertEqual(<<"pkg:hex/", Name/bitstring, "@", Version/bitstring>>, Purl)
+    end, Components).
+
 %--- basic_app_with_sbom group ---
 serial_number_change_test(Config) ->
     OldSBoMJSON = ?config(sbom_json, Config),
@@ -396,7 +447,6 @@ check_component_cyclonedx_constraints(Component) ->
     end.
 
 % These are the constraints that we impose for ORT
-% Hashes might be needed but we also need to cover a few edge cases
 check_component_ort_constraints(Component) ->
     ?assert(maps:is_key(<<"bom-ref">>, Component),
            "Component bom-ref is missing"),
@@ -410,7 +460,11 @@ check_component_ort_constraints(Component) ->
     ?assert(maps:is_key(<<"licenses">>, Component),
             "Component licenses are required"),
     ?assert(maps:is_key(<<"purl">>, Component),
-            "Component purl is missing").
+            "Component purl is missing"),
+    ?assert(maps:is_key(<<"scope">>, Component),
+            "Component scope is missing"),
+    ?assert(maps:is_key(<<"hashes">>, Component),
+            "Component hashes are missing").
 
 check_bom_ref_format(Component) ->
     #{<<"bom-ref">> := BomRef} = Component,
@@ -427,3 +481,8 @@ check_hashes_constraints(Hashes) ->
 
 check_purl_format(Purl) ->
     ?assertNotEqual(nomatch, re:run(Purl, ?PURL_REGEX)).
+
+check_licenses_constraints(Licenses) ->
+    lists:foreach(fun(License) ->
+        ?assertMatch(#{<<"license">> := #{<<"id">> := _}}, License)
+    end, Licenses).

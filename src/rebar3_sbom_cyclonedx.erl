@@ -71,6 +71,7 @@ component(RawComponent) ->
         authors = authors(RawComponent),
         version = component_field(version, RawComponent),
         description = component_field(description, RawComponent),
+        scope = component_field(scope, RawComponent),
         hashes = component_field(sha256, RawComponent),
         licenses = component_field(licenses, RawComponent),
         externalReferences = component_field(external_references, RawComponent),

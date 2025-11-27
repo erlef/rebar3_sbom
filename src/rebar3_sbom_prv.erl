@@ -90,7 +90,8 @@ dep_info(Dep) ->
          {description, proplists:get_value(description, Details)},
          {licenses, Licenses},
          {external_references, ExternalReferences},
-         {dependencies, Deps}
+         {dependencies, Deps},
+         {scope, required}
         ],
     dep_info(Name, Version, Source, Common).
 
