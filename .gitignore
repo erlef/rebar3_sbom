@@ -19,3 +19,14 @@ rebar3.crashdump
 doc/
 bom.xml
 bom.json
+
+# Devenv
+.devenv*
+devenv.local.nix
+devenv.local.yaml
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml

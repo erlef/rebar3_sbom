@@ -1,0 +1,75 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: 2025 Erlang Ecosystem Foundation
+
+on:
+  pull_request:
+    branches:
+      - "*"
+  workflow_dispatch: {}
+
+name: "Pull Request"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: "Test"
+
+    permissions:
+      contents: read
+      security-events: write
+
+    uses: ./.github/workflows/part_test.yml
+
+  build:
+    name: "Build"
+
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
+
+    uses: ./.github/workflows/part_build.yml
+    with:
+      attest: false
+
+  docs:
+    name: "Docs"
+
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
+
+    uses: ./.github/workflows/part_docs.yml
+    with:
+      attest: false
+
+  smoke_test:
+    name: "Smoke Test"
+
+    needs: ['build']
+
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
+
+    uses: ./.github/workflows/part_smoke_test.yml
+
+  dependency-review:
+    name: "Dependency Review"
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: audit
+
+      - name: 'Checkout Repository'
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - name: 'Dependency Review'
+        uses: actions/dependency-review-action@3c4e3dcb1aa7874d2c16be7d79418e9b7efd6261 # v4.8.2

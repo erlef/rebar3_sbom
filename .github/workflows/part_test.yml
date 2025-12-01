@@ -1,0 +1,119 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: 2025 Erlang Ecosystem Foundation
+
+on:
+  workflow_call: {}
+
+name: "Test"
+
+permissions:
+  contents: read
+
+jobs:
+  detectToolVersions:
+    name: "Detect Tool Versions"
+
+    runs-on: ubuntu-latest
+
+    outputs:
+      otpVersion: "${{ steps.toolVersions.outputs.OTP_VERSION }}"
+      rebar3Version: "${{ steps.toolVersions.outputs.REBAR3_VERSION }}"
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - name: "Read .tool-versions"
+        id: toolVersions
+        run: |
+          OTP_VERSION="$(cat .tool-versions | grep erlang | cut -d' ' -f2-)"
+          echo OTP: $OTP_VERSION
+          echo "OTP_VERSION=${OTP_VERSION}" >> $GITHUB_OUTPUT
+
+          REBAR3_VERSION="$(cat .tool-versions | grep rebar | cut -d' ' -f2-)"
+          echo REBAR3: $REBAR3_VERSION
+          echo "REBAR3_VERSION=${REBAR3_VERSION}" >> $GITHUB_OUTPUT
+
+  format:
+    name: Check Formatting
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          submodules: true
+
+      - uses: ./.github/actions/setup-runtime-env
+
+      - run: rebar3 fmt --check
+
+  ct:
+    name: rebar3 CT (${{ matrix.name }})
+
+    needs: ["detectToolVersions"]
+
+    runs-on: ${{ matrix.runs-on }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Lowest Supported
+          - otp: "27.0"
+            name: "lowest"
+            runs-on: ubuntu-latest
+            unstable: false
+          # Latest Supported
+          - otp: "${{ needs.detectToolVersions.outputs.otpVersion }}"
+            name: "latest"
+            runs-on: ubuntu-latest
+            enable_coverage_export: "true"
+            unstable: false
+          # Test Main
+          - otp: "${{ needs.detectToolVersions.outputs.otpVersion }}"
+            name: "main"
+            runs-on: ubuntu-latest
+            unstable: true
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          submodules: true
+
+      - uses: ./.github/actions/setup-runtime-env
+        with:
+          otp-version: ${{ matrix.otp }}
+          rebar3-version: ${{ needs.detectToolVersions.outputs.rebar3Version }}
+
+      - run: rebar3 ct
+        continue-on-error: ${{ matrix.unstable }}
+
+  dialyzer:
+    name: "Check Dialyzer"
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          submodules: true
+
+      - uses: ./.github/actions/setup-runtime-env
+
+      - run: rebar3 dialyzer

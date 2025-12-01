@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: 2025 Erlang Ecosystem Foundation
+
+name: "Setup Application Runtime Environment"
+description: "Setup Application Runtime Environment"
+inputs:
+  otp-version:
+    description: "OTP version to install"
+    required: false
+    default: ""
+  rebar3-version:
+    description: "Rebar3 version to install"
+    required: false
+    default: ""
+runs:
+  using: "composite"
+  steps:
+    - name: "Setup BEAM"
+      uses: erlef/setup-beam@5304e04ea2b355f03681464e683d92e3b2f18451 # v1.18.2
+      with:
+        version-file: "${{ !inputs.otp-version && '.tool-versions' || '' }}"
+        version-type: strict
+        otp-version: "${{ inputs.otp-version }}"
+        rebar3-version: "${{ inputs.rebar3-version }}"
+
+    - name: "Cache Deps / Build"
+      uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+      with:
+        path: |-
+          deps
+          _build
+        key: "${{ format('{0}-{1}-{2}', hashFiles('.tool-versions'), inputs.otp-version, hashFiles('rebar.lock')) }}"
+        restore-keys: "${{ format('{0}-{1}-', hashFiles('.tool-versions'), inputs.otp-version) }}"
+
+    - name: "Install Dependencies"
+      run: rebar3 get-deps
+      shell: bash
+
+    - name: "Compile Dependencies"
+      run: rebar3 compile --deps_only
+      shell: bash
+
+    - name: "Compile Application"
+      run: rebar3 compile
+      shell: bash
+      env:
+        ERL_COMPILER_OPTIONS: warnings_as_errors

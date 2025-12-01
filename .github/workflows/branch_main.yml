@@ -1,0 +1,55 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: 2025 Erlang Ecosystem Foundation
+
+on:
+  push:
+    branches:
+      # TODO: Rename master to main
+      - "master"
+
+name: "Main Branch"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: "Test"
+
+    permissions:
+      contents: read
+      security-events: write
+
+    uses: ./.github/workflows/part_test.yml
+
+  build:
+    name: "Build"
+    
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
+
+    uses: ./.github/workflows/part_build.yml
+
+  docs:
+    name: "Docs"
+    
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
+
+    uses: ./.github/workflows/part_docs.yml
+
+  smoke_test:
+    name: "Smoke Test"
+
+    needs: ['build']
+
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
+
+    uses: ./.github/workflows/part_smoke_test.yml

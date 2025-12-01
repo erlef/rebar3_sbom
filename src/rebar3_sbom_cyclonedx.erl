@@ -52,10 +52,10 @@ sbom_authors(undefined, App) ->
 sbom_authors(Author, _App) ->
     [#individual{name = Author}].
 
--spec sbom_licenses(Licenses, App) -> Licenses when
-    Licenses :: undefined | [string()],
+-spec sbom_licenses(LicensesIn, App) -> LicensesOut when
+    LicensesIn :: undefined | [string()],
     App :: proplists:proplist(),
-    Licenses :: [#license{}].
+    LicensesOut :: [#license{}].
 sbom_licenses(undefined, App) ->
     component_field(licenses, App);
 sbom_licenses(Licenses, _App) ->
@@ -119,9 +119,9 @@ license(Name) ->
             #{id => SpdxId}
     end.
 
--spec manufacturer(Manufacturer) -> Manufacturer when
-    Manufacturer :: undefined | map(),
-    Manufacturer :: #organization{} | undefined.
+-spec manufacturer(ManufacturerIn) -> ManufacturerOut when
+    ManufacturerIn :: undefined | map(),
+    ManufacturerOut :: #organization{} | undefined.
 manufacturer(undefined) ->
     undefined;
 manufacturer(Manufacturer) ->
@@ -144,9 +144,9 @@ address(AddressMap) ->
         street_address = maps:get(street_address, AddressMap, undefined)
     }.
 
--spec individuals(Individuals) -> Individuals when
-    Individuals :: [string()],
-    Individuals :: [#individual{}].
+-spec individuals(IndividualsIn) -> IndividualsOut when
+    IndividualsIn :: [string()],
+    IndividualsOut :: [#individual{}].
 individuals(undefined) ->
     [];
 individuals(Individuals) ->

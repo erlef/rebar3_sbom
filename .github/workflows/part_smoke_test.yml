@@ -1,0 +1,68 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: 2025 Erlang Ecosystem Foundation
+
+on:
+  workflow_call: {}
+
+name: "Smoke Test"
+
+permissions:
+  contents: read
+
+jobs:
+  rebar3:
+    name: "Rebar3 Task"
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          submodules: true
+
+      - uses: ./.github/actions/setup-runtime-env
+
+      - name: "Test All Combinations"
+        uses: ./.github/actions/validate-cyclonedx-bom
+        with:
+          command: "rebar3 sbom"
+          test-name: "Rebar3"
+
+  escript:
+    name: "EScript"
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          submodules: true
+
+      - uses: ./.github/actions/setup-runtime-env
+
+      - name: "Download EScript"
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v5.0.0
+        with:
+          name: escript
+          path: ./escript_artifacts
+
+      - name: "Make EScript Executable"
+        run: |
+          chmod +x ./escript_artifacts/rebar3_sbom
+
+      - name: "Test All Combinations"
+        uses: ./.github/actions/validate-cyclonedx-bom
+        with:
+          command: "./escript_artifacts/rebar3_sbom cyclonedx"
+          command-args: "."
+          test-name: "EScript"
