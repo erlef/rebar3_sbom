@@ -32,6 +32,16 @@ jobs:
 
     uses: ./.github/workflows/part_build.yml
 
+  licensing:
+    name: "Licensing"
+
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
+
+    uses: ./.github/workflows/part_licensing.yml
+
   docs:
     name: "Docs"
     

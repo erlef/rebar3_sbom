@@ -1,3 +1,9 @@
+%% SPDX-License-Identifier: BSD-3-Clause
+%% SPDX-FileCopyrightText: 2020 Andrew Mayorov
+%% SPDX-FileCopyrightText: 2022 Bram Verburg
+%% SPDX-FileCopyrightText: 2024 Sebastian Strollo
+%% SPDX-FileCopyrightText: 2025 Stritzinger GmbH
+
 -module(rebar3_sbom_purl).
 
 % https://github.com/package-url/purl-spec

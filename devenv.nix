@@ -13,6 +13,7 @@ in
     git
     sbom-utility
     cyclonedx-cli
+    reuse
   ];
 
   languages.erlang = {

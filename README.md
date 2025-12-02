@@ -1,3 +1,10 @@
+<!--
+  SPDX-License-Identifier: BSD-3-Clause
+  SPDX-FileCopyrightText: 2019 Bram Verburg
+  SPDX-FileCopyrightText: 2024 Máté Lajkó
+  SPDX-FileCopyrightText: 2025 Stritzinger GmbH
+-->
+
 rebar3_sbom
 ===========
 

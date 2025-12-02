@@ -1,3 +1,6 @@
+%% SPDX-License-Identifier: BSD-3-Clause
+%% SPDX-FileCopyrightText: 2025 Stritzinger GmbH
+
 -module(rebar3_sbom_purl_SUITE).
 
 % CT Exports

@@ -1,3 +1,7 @@
+%% SPDX-License-Identifier: BSD-3-Clause
+%% SPDX-FileCopyrightText: 2024 Máté Lajkó
+%% SPDX-FileCopyrightText: 2025 Stritzinger GmbH
+
 %--- Macros --------------------------------------------------------------------
 
 -define(APP, "rebar3_sbom").

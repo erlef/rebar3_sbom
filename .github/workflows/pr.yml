@@ -34,6 +34,18 @@ jobs:
     with:
       attest: false
 
+  licensing:
+    name: "Licensing"
+
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
+
+    uses: ./.github/workflows/part_licensing.yml
+    with:
+      attest: false
+
   docs:
     name: "Docs"
 
