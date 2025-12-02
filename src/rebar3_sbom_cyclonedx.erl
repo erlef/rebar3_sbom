@@ -18,10 +18,13 @@ bom({FilePath, _} = FileInfo, IsStrictVersion, AppInfo, RawComponents, Serial, M
     try
         V = version(FileInfo, IsStrictVersion, SBoM),
         SBoM#sbom{version = V}
-    catch _:Reason:_Stacktrace ->
-        logger:error("scan file:~ts failed, reason:~p, will use the default version number ~p",
-                     [FilePath, Reason, ?DEFAULT_VERSION]),
-        SBoM
+    catch
+        _:Reason:_Stacktrace ->
+            logger:error(
+                "scan file:~ts failed, reason:~p, will use the default version number ~p",
+                [FilePath, Reason, ?DEFAULT_VERSION]
+            ),
+            SBoM
     end.
 
 -spec metadata(App, MetadataInfo) -> Metadata when
@@ -100,8 +103,10 @@ component_field(external_references = Field, RawComponent) ->
         [] ->
             [];
         References ->
-            [#external_reference{type = Type, url = Url} ||
-             {Type, Url} <- maps:to_list(References)]
+            [
+                #external_reference{type = Type, url = Url}
+             || {Type, Url} <- maps:to_list(References)
+            ]
     end;
 component_field(Field, RawComponent) ->
     case proplists:get_value(Field, RawComponent) of
@@ -125,11 +130,12 @@ license(Name) ->
 manufacturer(undefined) ->
     undefined;
 manufacturer(Manufacturer) ->
-    #organization{name = maps:get(name, Manufacturer, undefined),
-                  address = address(maps:get(address, Manufacturer, undefined)),
-                  url = maps:get(url, Manufacturer, []),
-                  contact = individuals(maps:get(contact, Manufacturer, undefined))
-}.
+    #organization{
+        name = maps:get(name, Manufacturer, undefined),
+        address = address(maps:get(address, Manufacturer, undefined)),
+        url = maps:get(url, Manufacturer, []),
+        contact = individuals(maps:get(contact, Manufacturer, undefined))
+    }.
 
 -spec address(undefined | map()) -> undefined | #address{}.
 address(undefined) ->
@@ -150,11 +156,16 @@ address(AddressMap) ->
 individuals(undefined) ->
     [];
 individuals(Individuals) ->
-    lists:map(fun(Individual) ->
-        #individual{name = maps:get(name, Individual, undefined),
-                    email = maps:get(email, Individual, undefined),
-                    phone = maps:get(phone, Individual, undefined)}
-    end, Individuals).
+    lists:map(
+        fun(Individual) ->
+            #individual{
+                name = maps:get(name, Individual, undefined),
+                email = maps:get(email, Individual, undefined),
+                phone = maps:get(phone, Individual, undefined)
+            }
+        end,
+        Individuals
+    ).
 
 -spec authors(App) -> Authors when
     App :: proplists:proplist(),
@@ -164,11 +175,14 @@ authors(App) ->
 
 uuid() ->
     [A, B, C, D, E] = [crypto:strong_rand_bytes(Len) || Len <- [4, 2, 2, 2, 6]],
-    UUID = lists:join("-", [hex(Part) || Part <- [A, B, <<4:4, C:12/binary-unit:1>>, <<2:2, D:14/binary-unit:1>>, E]]),
+    UUID = lists:join("-", [
+        hex(Part)
+     || Part <- [A, B, <<4:4, C:12/binary-unit:1>>, <<2:2, D:14/binary-unit:1>>, E]
+    ]),
     "urn:uuid:" ++ UUID.
 
 hex(Bin) ->
-    string:lowercase(<< <<Hex>> || <<Nibble:4>> <= Bin, Hex <- integer_to_list(Nibble,16) >>).
+    string:lowercase(<<<<Hex>> || <<Nibble:4>> <= Bin, Hex <- integer_to_list(Nibble, 16)>>).
 
 dependencies(RawComponents) ->
     [dependency(RawComponent) || RawComponent <- RawComponents].
@@ -177,9 +191,7 @@ dependency(RawComponent) ->
     RawDependencies = proplists:get_value(dependencies, RawComponent, []),
     #dependency{
         ref = bom_ref_of_component(RawComponent),
-        dependencies = [
-            dependency([{name, D}]) || D <- RawDependencies
-        ]
+        dependencies = [dependency([{name, D}]) || D <- RawDependencies]
     }.
 
 bom_ref_of_component(RawComponent) ->
@@ -201,7 +213,8 @@ version({FilePath, Format}, IsStrictVersion, NewSBoM) ->
 
 -spec version(IsStrictVersion, {NewSBoM, OldSBoM}) -> Version when
     IsStrictVersion :: boolean(),
-    NewSBoM :: #sbom{}, OldSBoM :: #sbom{},
+    NewSBoM :: #sbom{},
+    OldSBoM :: #sbom{},
     Version :: integer().
 version(_, {_, OldSBoM}) when OldSBoM#sbom.version =:= 0 ->
     rebar_api:info(
@@ -229,9 +242,8 @@ version(IsStrictVersion, {NewSBoM, OldSBoM}) when IsStrictVersion =:= true ->
     end.
 
 is_sbom_equal(#sbom{components = NewComponents}, #sbom{components = OldComponents}) ->
-    lists:all(fun(C) -> lists:member(C, NewComponents) end, OldComponents)
-    andalso
-    lists:all(fun(C) -> lists:member(C, OldComponents) end, NewComponents).
+    lists:all(fun(C) -> lists:member(C, NewComponents) end, OldComponents) andalso
+        lists:all(fun(C) -> lists:member(C, OldComponents) end, NewComponents).
 
 decode(FilePath, "xml") ->
     rebar3_sbom_xml:decode(FilePath);

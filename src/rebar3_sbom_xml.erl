@@ -7,7 +7,9 @@
 
 -define(XMLNS, "http://cyclonedx.org/schema/bom/1.6").
 -define(XMLNS_XSI, "http://www.w3.org/2001/XMLSchema-instance").
--define(XSI_SCHEMA_LOC, "http://cyclonedx.org/schema/bom/1.6 https://cyclonedx.org/schema/bom-1.6.xsd").
+-define(XSI_SCHEMA_LOC,
+    "http://cyclonedx.org/schema/bom/1.6 https://cyclonedx.org/schema/bom-1.6.xsd"
+).
 
 encode(SBoM) ->
     Content = sbom_to_xml(SBoM),
@@ -18,9 +20,7 @@ decode(FilePath) ->
     %       does not have a valid version.
     {SBoM, _} = xmerl_scan:file(FilePath),
     Version = xml_to_bom_version(SBoM, 0),
-    Components = [
-        xml_to_component(C) || C <- xpath("/bom/components/component", SBoM)
-    ],
+    Components = [xml_to_component(C) || C <- xpath("/bom/components/component", SBoM)],
     #sbom{version = Version, components = Components}.
 
 % Encode -----------------------------------------------------------------------
@@ -34,7 +34,8 @@ xml_to_bom_version(Xml, Default) ->
 
 sbom_to_xml(#sbom{metadata = Metadata} = SBoM) ->
     {
-        bom, [
+        bom,
+        [
             {xmlns, ?XMLNS},
             {'xmlns:xsi', ?XMLNS_XSI},
             {'xsi:schemaLocation', ?XSI_SCHEMA_LOC},
@@ -44,9 +45,7 @@ sbom_to_xml(#sbom{metadata = Metadata} = SBoM) ->
         [
             {metadata, [
                 {timestamp, [Metadata#metadata.timestamp]},
-                {tools,
-                    [tool_to_xml(Tool) || Tool <- Metadata#metadata.tools]
-                },
+                {tools, [tool_to_xml(Tool) || Tool <- Metadata#metadata.tools]},
                 component_to_xml(Metadata#metadata.component)
             ]},
             {components, [component_to_xml(C) || C <- SBoM#sbom.components]},
@@ -101,31 +100,27 @@ external_reference_to_xml(#external_reference{type = Type, url = Url}) ->
     {reference, [{type, Type}], [{url, [Url]}]}.
 
 dependency_to_xml(Dependency) ->
-    {dependency, [{ref, Dependency#dependency.ref}],
-        [dependency_to_xml(D) || D <- Dependency#dependency.dependencies]
-    }.
+    {dependency, [{ref, Dependency#dependency.ref}], [
+        dependency_to_xml(D)
+     || D <- Dependency#dependency.dependencies
+    ]}.
 
 % Decode -----------------------------------------------------------------------
 xml_to_component(Component) ->
     [#xmlAttribute{value = Type}] = xpath("/component/@type", Component),
     [#xmlAttribute{value = BomRef}] = xpath("/component/@bom-ref", Component),
-    Authors = [
-        xml_to_author(A) || A <- xpath("/component/authors/author", Component)
-    ],
+    Authors = [xml_to_author(A) || A <- xpath("/component/authors/author", Component)],
     Name = xpath("/component/name/text()", Component),
     Version = xpath("/component/version/text()", Component),
     Description = xpath("/component/description/text()", Component),
     Scope = xpath("/component/scope/text()", Component),
     Purl = xpath("/component/purl/text()", Component),
-    Hashes = [
-        xml_to_hash(H) || H <- xpath("/component/hashes/hash", Component)
-    ],
+    Hashes = [xml_to_hash(H) || H <- xpath("/component/hashes/hash", Component)],
     ExternalReferences = [
-        xml_to_external_reference(Ref) || Ref <- xpath("/component/externalReferences/reference", Component)
+        xml_to_external_reference(Ref)
+     || Ref <- xpath("/component/externalReferences/reference", Component)
     ],
-    Licenses = [
-        xml_to_license(L) || L <- xpath("/component/licenses/license", Component)
-    ],
+    Licenses = [xml_to_license(L) || L <- xpath("/component/licenses/license", Component)],
     #component{
         type = Type,
         bom_ref = BomRef,

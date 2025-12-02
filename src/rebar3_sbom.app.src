@@ -1,14 +1,14 @@
-{application, rebar3_sbom,
- [{description, "Rebar3 plugin to generate CycloneDX SBoM"},
-  {vsn, "0.8.0"},
-  {registered, []},
-  {applications,
-   [kernel,
-    stdlib
-   ]},
-  {env,[]},
-  {modules, []},
+{application, rebar3_sbom, [
+    {description, "Rebar3 plugin to generate CycloneDX SBoM"},
+    {vsn, "0.8.0"},
+    {registered, []},
+    {applications, [
+        kernel,
+        stdlib
+    ]},
+    {env, []},
+    {modules, []},
 
-  {licenses, ["BSD-3-Clause"]},
-  {links, [{"GitHub", "https://github.com/voltone/rebar3_sbom"}]}
- ]}.
+    {licenses, ["BSD-3-Clause"]},
+    {links, [{"GitHub", "https://github.com/voltone/rebar3_sbom"}]}
+]}.

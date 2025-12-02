@@ -24,17 +24,20 @@
 
 %--- Common test functions -----------------------------------------------------
 
-all() -> [hex_core_cpe_test,
-          plug_cpe_test,
-          phoenix_cpe_test,
-          coherence_cpe_test,
-          xain_cpe_test,
-          sweet_xml_cpe_test,
-          erlang_otp_cpe_test,
-          rebar3_cpe_test,
-          elixir_cpe_test,
-          default_behavior_test,
-          no_url_test].
+all() ->
+    [
+        hex_core_cpe_test,
+        plug_cpe_test,
+        phoenix_cpe_test,
+        coherence_cpe_test,
+        xain_cpe_test,
+        sweet_xml_cpe_test,
+        erlang_otp_cpe_test,
+        rebar3_cpe_test,
+        elixir_cpe_test,
+        default_behavior_test,
+        no_url_test
+    ].
 
 init_per_suite(Config) ->
     Config.
@@ -105,9 +108,13 @@ elixir_cpe_test(_) ->
     ?assertEqual(<<"cpe:2.3:a:elixir-lang:elixir:*:*:*:*:*:*:*:*">>, CPENoVersion).
 
 default_behavior_test(_) ->
-    CPE = rebar3_sbom_cpe:cpe(<<"my_package">>, <<"1.0.0">>, <<"https://github.com/my_org/my_package">>),
+    CPE = rebar3_sbom_cpe:cpe(
+        <<"my_package">>, <<"1.0.0">>, <<"https://github.com/my_org/my_package">>
+    ),
     ?assertEqual(<<"cpe:2.3:a:my_org:my_package:1.0.0:*:*:*:*:*:*:*">>, CPE),
-    CPENoVersion = rebar3_sbom_cpe:cpe(<<"my_package">>, undefined, <<"https://github.com/my_org/my_package">>),
+    CPENoVersion = rebar3_sbom_cpe:cpe(
+        <<"my_package">>, undefined, <<"https://github.com/my_org/my_package">>
+    ),
     ?assertEqual(<<"cpe:2.3:a:my_org:my_package:*:*:*:*:*:*:*:*">>, CPENoVersion).
 
 no_url_test(_) ->

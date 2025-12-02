@@ -9,8 +9,11 @@
 encode(SBoM) ->
     Content = sbom_to_json(SBoM),
     Opts = [
-        native_forward_slash, native_utf8, canonical_form,
-        {indent, 2}, {space, 1}
+        native_forward_slash,
+        native_utf8,
+        canonical_form,
+        {indent, 2},
+        {space, 1}
     ],
     jsone:encode(Content, Opts).
 
@@ -61,9 +64,11 @@ individuals_to_json(Individuals) ->
 
 -spec individual_to_json(#individual{}) -> #{name => binary()}.
 individual_to_json(Individual) ->
-    prune_content(#{name => bin(Individual#individual.name),
-                    email => bin(Individual#individual.email),
-                    phone => bin(Individual#individual.phone)}).
+    prune_content(#{
+        name => bin(Individual#individual.name),
+        email => bin(Individual#individual.email),
+        phone => bin(Individual#individual.phone)
+    }).
 
 -spec metadata_to_json(#metadata{}) -> map().
 metadata_to_json(Metadata) ->
@@ -127,9 +132,7 @@ license_to_json(#{id := Id}) ->
 dependency_to_json(D) ->
     #{
         ref => bin(D#dependency.ref),
-        dependsOn => [
-            bin(SubD#dependency.ref) || SubD <- D#dependency.dependencies
-        ]
+        dependsOn => [bin(SubD#dependency.ref) || SubD <- D#dependency.dependencies]
     }.
 
 bin(undefined) ->

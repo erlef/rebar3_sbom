@@ -5,11 +5,13 @@
 -include("rebar3_sbom.hrl").
 
 %--- Macros --------------------------------------------------------------------
--define(CUSTOM_MAPPING, #{"github" => "vcs",
-                          "homepage" => "website",
-                          "releases" => "release-notes",
-                          "changelog" => "release-notes",
-                          "issues" => "issue-tracker"}).
+-define(CUSTOM_MAPPING, #{
+    "github" => "vcs",
+    "homepage" => "website",
+    "releases" => "release-notes",
+    "changelog" => "release-notes",
+    "issues" => "issue-tracker"
+}).
 
 %% ===================================================================
 %% Public API
@@ -17,20 +19,29 @@
 -spec init(rebar_state:t()) -> {ok, rebar_state:t()}.
 init(State) ->
     Provider = providers:create([
-            {name, ?PROVIDER},            % The 'user friendly' name of the task
-            {module, ?MODULE},            % The module implementation of the task
-            {bare, true},                 % The task can be run by the user, always true
-            {deps, ?DEPS},                % The list of dependencies
-            {example, "rebar3 sbom"},     % How to use the plugin
-            {opts, [                      % list of options understood by the plugin
-              {format, $F, "format", {string, "xml"}, "file format, [xml|json]"},
-              {output, $o, "output", {string, ?DEFAULT_OUTPUT}, "the full path to the SBoM output file"},
-              {force, $f, "force", {boolean, false}, "overwite existing files without prompting for confirmation"},
-              {strict_version, $V, "strict_version", {boolean, true}, "modify the version number of the BoM only when the content changes"},
-              {author, $a, "author", string, "the author of the SBoM"}
-            ]},
-            {short_desc, "Generates CycloneDX SBoM"},
-            {desc, "Generates a Software Bill-of-Materials (SBoM) in CycloneDX format"}
+        % The 'user friendly' name of the task
+        {name, ?PROVIDER},
+        % The module implementation of the task
+        {module, ?MODULE},
+        % The task can be run by the user, always true
+        {bare, true},
+        % The list of dependencies
+        {deps, ?DEPS},
+        % How to use the plugin
+        {example, "rebar3 sbom"},
+        % list of options understood by the plugin
+        {opts, [
+            {format, $F, "format", {string, "xml"}, "file format, [xml|json]"},
+            {output, $o, "output", {string, ?DEFAULT_OUTPUT},
+                "the full path to the SBoM output file"},
+            {force, $f, "force", {boolean, false},
+                "overwite existing files without prompting for confirmation"},
+            {strict_version, $V, "strict_version", {boolean, true},
+                "modify the version number of the BoM only when the content changes"},
+            {author, $a, "author", string, "the author of the SBoM"}
+        ]},
+        {short_desc, "Generates CycloneDX SBoM"},
+        {desc, "Generates a Software Bill-of-Materials (SBoM) in CycloneDX format"}
     ]),
     {ok, rebar_state:add_provider(State, Provider)}.
 
@@ -47,13 +58,16 @@ do(State) ->
     FilePath = filepath(Output, Format),
     DepsInfo = [dep_info(Dep) || Dep <- rebar_state:all_deps(State)],
     AppInfo = dep_info(App),
-    AppInfo2 = [ {sha256, hash(AppInfo, rebar_dir:base_dir(State))} | AppInfo],
+    AppInfo2 = [{sha256, hash(AppInfo, rebar_dir:base_dir(State))} | AppInfo],
     MetadataInfo = metadata(State),
-    SBoM = rebar3_sbom_cyclonedx:bom({FilePath, Format}, IsStrictVersion, AppInfo2, DepsInfo, MetadataInfo),
-    Contents = case Format of
-        "xml" -> rebar3_sbom_xml:encode(SBoM);
-        "json" -> rebar3_sbom_json:encode(SBoM)
-    end,
+    SBoM = rebar3_sbom_cyclonedx:bom(
+        {FilePath, Format}, IsStrictVersion, AppInfo2, DepsInfo, MetadataInfo
+    ),
+    Contents =
+        case Format of
+            "xml" -> rebar3_sbom_xml:encode(SBoM);
+            "json" -> rebar3_sbom_json:encode(SBoM)
+        end,
     case write_file(FilePath, Contents, Force) of
         ok ->
             rebar_api:info("CycloneDX SBoM written to ~s", [FilePath]),
@@ -72,9 +86,11 @@ metadata(State) ->
     PluginOpts = rebar_state:get(State, rebar3_sbom, []),
     Manufacturer = proplists:get_value(sbom_manufacturer, PluginOpts, undefined),
     Licenses = proplists:get_value(sbom_licenses, PluginOpts, undefined),
-    [{author, proplists:get_value(author, Args, undefined)},
-     {manufacturer, Manufacturer},
-     {licenses, Licenses}].
+    [
+        {author, proplists:get_value(author, Args, undefined)},
+        {manufacturer, Manufacturer},
+        {licenses, Licenses}
+    ].
 
 dep_info(Dep) ->
     HexMetadata = hex_metadata(Dep),
@@ -85,25 +101,26 @@ dep_info(Dep) ->
     Deps = rebar_app_info:deps(Dep),
     Licenses0 = proplists:get_value(licenses, Details, []),
     HexMetadataLicenses = hex_metadata_licenses(HexMetadata),
-    ExternalReferences = case proplists:get_value(links, Details) of
-        undefined ->
-            undefined;
-        ExternalLinks ->
-            find_references(ExternalLinks)
-    end,
+    ExternalReferences =
+        case proplists:get_value(links, Details) of
+            undefined ->
+                undefined;
+            ExternalLinks ->
+                find_references(ExternalLinks)
+        end,
     % remove duplicates, if any
     Licenses = lists:usort(Licenses0 ++ HexMetadataLicenses),
     Links = proplists:get_value(links, Details, []),
     GitHubLink = get_github_link(HexMetadata, Links),
     Common =
         [
-         {authors, proplists:get_value(maintainers, Details, [])},
-         {description, proplists:get_value(description, Details)},
-         {licenses, Licenses},
-         {external_references, ExternalReferences},
-         {dependencies, Deps},
-         {scope, required},
-         {github_link, GitHubLink}
+            {authors, proplists:get_value(maintainers, Details, [])},
+            {description, proplists:get_value(description, Details)},
+            {licenses, Licenses},
+            {external_references, ExternalReferences},
+            {dependencies, Deps},
+            {scope, required},
+            {github_link, GitHubLink}
         ],
     dep_info(Name, Version, Source, Common).
 
@@ -151,29 +168,72 @@ find_references(Links) ->
                         false ->
                             Acc
                     end;
-                _ when LowerType =:= "changelog" andalso
-                                is_map_key("release-note", Acc) ->
+                _ when
+                    LowerType =:= "changelog" andalso
+                        is_map_key("release-note", Acc)
+                ->
                     % changelog is a fallback for release-note.
                     % We don't overwrite the release-note if it already exists.
                     Acc;
                 MappedType ->
                     Acc#{MappedType => Url}
             end
-        end, #{}, Links).
+        end,
+        #{},
+        Links
+    ).
 
 valid_external_reference_types() ->
     % https://cyclonedx.org/docs/1.6/json/#metadata_component_externalReferences_items_type
-    ["vcs", "issue-tracker", "website", "advisories", "bom", "mailing-list",
-     "social", "chat", "documentation", "support", "source-distribution",
-     "distribution", "distribution-intake", "license", "build-meta", "build-system",
-     "release-notes", "security-contact", "model-card", "log", "configuration",
-     "evidence", "formulation", "attestation", "threat-model", "adversary-model",
-     "risk-assessment", "vulnerability-assertion", "exploitability-statement",
-     "pentest-report", "static-analysis-report", "dynamic-analysis-report",
-     "runtime-analysis-report", "component-analysis-report", "maturity-report",
-     "certification-report", "codified-infrastructure", "quality-metrics",
-     "poam", "electronic-signature", "digital-signature", "rfc-9116",
-     "patent", "patent-family", "patent-assertion", "citation", "other"].
+    [
+        "vcs",
+        "issue-tracker",
+        "website",
+        "advisories",
+        "bom",
+        "mailing-list",
+        "social",
+        "chat",
+        "documentation",
+        "support",
+        "source-distribution",
+        "distribution",
+        "distribution-intake",
+        "license",
+        "build-meta",
+        "build-system",
+        "release-notes",
+        "security-contact",
+        "model-card",
+        "log",
+        "configuration",
+        "evidence",
+        "formulation",
+        "attestation",
+        "threat-model",
+        "adversary-model",
+        "risk-assessment",
+        "vulnerability-assertion",
+        "exploitability-statement",
+        "pentest-report",
+        "static-analysis-report",
+        "dynamic-analysis-report",
+        "runtime-analysis-report",
+        "component-analysis-report",
+        "maturity-report",
+        "certification-report",
+        "codified-infrastructure",
+        "quality-metrics",
+        "poam",
+        "electronic-signature",
+        "digital-signature",
+        "rfc-9116",
+        "patent",
+        "patent-family",
+        "patent-assertion",
+        "citation",
+        "other"
+    ].
 
 dep_info(_Name, _Version, {pkg, Name, Version, Sha256}, Common) ->
     GitHubLink = proplists:get_value(github_link, Common, undefined),
@@ -183,8 +243,8 @@ dep_info(_Name, _Version, {pkg, Name, Version, Sha256}, Common) ->
         {purl, rebar3_sbom_purl:hex(Name, Version)},
         {sha256, string:lowercase(Sha256)},
         {cpe, rebar3_sbom_cpe:cpe(Name, list_to_binary(Version), GitHubLink)}
-    | Common ];
-
+        | Common
+    ];
 dep_info(_Name, _Version, {pkg, Name, Version, _InnerChecksum, OuterChecksum, _RepoConfig}, Common) ->
     GitHubLink = proplists:get_value(github_link, Common, undefined),
     [
@@ -193,8 +253,8 @@ dep_info(_Name, _Version, {pkg, Name, Version, _InnerChecksum, OuterChecksum, _R
         {purl, rebar3_sbom_purl:hex(Name, Version)},
         {sha256, string:lowercase(OuterChecksum)},
         {cpe, rebar3_sbom_cpe:cpe(Name, Version, GitHubLink)}
-    | Common ];
-
+        | Common
+    ];
 dep_info(Name, DepVersion, {git, Git, GitRef}, Common) ->
     {Version, Purl, CPE} =
         case GitRef of
@@ -202,39 +262,42 @@ dep_info(Name, DepVersion, {git, Git, GitRef}, Common) ->
                 GeneratedCPE = rebar3_sbom_cpe:cpe(Name, list_to_binary(Tag), list_to_binary(Git)),
                 {Tag, rebar3_sbom_purl:git(Name, Git, Tag), GeneratedCPE};
             {branch, Branch} ->
-                GeneratedCPE = rebar3_sbom_cpe:cpe(Name, list_to_binary(Branch), list_to_binary(Git)),
+                GeneratedCPE = rebar3_sbom_cpe:cpe(
+                    Name, list_to_binary(Branch), list_to_binary(Git)
+                ),
                 {DepVersion, rebar3_sbom_purl:git(Name, Git, Branch), GeneratedCPE};
             {ref, Ref} ->
                 GeneratedCPE = rebar3_sbom_cpe:cpe(Name, list_to_binary(Ref), list_to_binary(Git)),
                 {DepVersion, rebar3_sbom_purl:git(Name, Git, Ref), GeneratedCPE}
         end,
     [
-     {name, Name},
-     {version, Version},
-     {purl, Purl},
-     {cpe, CPE}
-    | maybe_update_licenses(Purl, Common) ];
+        {name, Name},
+        {version, Version},
+        {purl, Purl},
+        {cpe, CPE}
+        | maybe_update_licenses(Purl, Common)
+    ];
 dep_info(Name, Version, {git_subdir, Git, Ref, _Dir}, Common) ->
     dep_info(Name, Version, {git, Git, Ref}, Common);
-
 dep_info(Name, Version, checkout, Common) ->
     GitHubLink = proplists:get_value(github_link, Common, undefined),
     [
-     {name, Name},
-     {version, Version},
-     {purl, rebar3_sbom_purl:local_otp_app(Name, Version)},
-     {cpe, rebar3_sbom_cpe:cpe(Name, list_to_binary(Version), GitHubLink)}
-    | Common ];
-
+        {name, Name},
+        {version, Version},
+        {purl, rebar3_sbom_purl:local_otp_app(Name, Version)},
+        {cpe, rebar3_sbom_cpe:cpe(Name, list_to_binary(Version), GitHubLink)}
+        | Common
+    ];
 dep_info(Name, Version, root_app, Common) ->
     GitHubLink = proplists:get_value(github_link, Common, undefined),
     Purl = rebar3_sbom_purl:hex(Name, Version),
     [
-     {name, Name},
-     {version, Version},
-     {purl, Purl},
-     {cpe, rebar3_sbom_cpe:cpe(Name, list_to_binary(Version), GitHubLink)}
-    | Common ].
+        {name, Name},
+        {version, Version},
+        {purl, Purl},
+        {cpe, rebar3_sbom_cpe:cpe(Name, list_to_binary(Version), GitHubLink)}
+        | Common
+    ].
 
 filepath(?DEFAULT_OUTPUT, Format) ->
     "./bom." ++ Format;
@@ -243,7 +306,6 @@ filepath(Path, _Format) ->
 
 write_file(Filename, Contents, true) ->
     file:write_file(Filename, Contents);
-
 write_file(Filename, Xml, false) ->
     case file:read_file_info(Filename) of
         {error, enoent} ->
@@ -261,7 +323,7 @@ write_file(Filename, Xml, false) ->
 
 maybe_update_licenses(Purl, Common) ->
     case proplists:get_value(licenses, Common) of
-        [_|_] ->
+        [_ | _] ->
             %% Non-empty list, ok
             Common;
         _ ->
@@ -270,8 +332,12 @@ maybe_update_licenses(Purl, Common) ->
                 <<"pkg:github/", GithubPurlString/binary>> ->
                     case get_github_license(GithubPurlString) of
                         {ok, SPDX_Id} ->
-                            lists:keyreplace(licenses, 1, Common,
-                                             {licenses, [SPDX_Id]});
+                            lists:keyreplace(
+                                licenses,
+                                1,
+                                Common,
+                                {licenses, [SPDX_Id]}
+                            );
                         _ ->
                             Common
                     end;
@@ -290,15 +356,14 @@ get_github_license(String) ->
 
 get_github_license(Org, Repo) ->
     URI =
-        #{ scheme => <<"https">>,
-           path => filename:join([<<"/repos">>, Org, Repo, <<"license">>]),
-           host => <<"api.github.com">>
-         },
+        #{
+            scheme => <<"https">>,
+            path => filename:join([<<"/repos">>, Org, Repo, <<"license">>]),
+            host => <<"api.github.com">>
+        },
     URIStr = uri_string:recompose(URI),
     Headers = #{<<"user-agent">> => <<"rebar3">>},
-    case
-        rebar_httpc_adapter:request(get, URIStr, Headers, undefined, #{})
-    of
+    case rebar_httpc_adapter:request(get, URIStr, Headers, undefined, #{}) of
         {ok, {200, _ReplyHeaders, Body}} ->
             case jsone:decode(Body) of
                 #{<<"license">> := #{<<"spdx_id">> := SPDX_Id}} ->
@@ -320,8 +385,10 @@ hash(AppInfo, BaseDir) ->
             Hash = crypto:hash(sha256, Content),
             iolist_to_binary([io_lib:format("~2.16.0b", [X]) || <<X>> <= Hash]);
         false ->
-            rebar_api:warn("Could not compute hash. Tarball not found: ~p",
-                              [TarPath]),
+            rebar_api:warn(
+                "Could not compute hash. Tarball not found: ~p",
+                [TarPath]
+            ),
             undefined
     end.
 

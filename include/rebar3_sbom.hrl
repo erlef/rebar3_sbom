@@ -11,7 +11,8 @@
 %--- Types ---------------------------------------------------------------------
 
 -type bom_ref() :: string().
--type spdx_licence_id() :: string(). % TODO: enumerate the valid SPDX licence IDs
+% TODO: enumerate the valid SPDX licence IDs
+-type spdx_licence_id() :: string().
 -type properties() :: [{string(), string()}].
 -type scope() :: required | optional | excluded.
 
