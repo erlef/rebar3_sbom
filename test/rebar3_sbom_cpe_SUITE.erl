@@ -51,65 +51,65 @@ end_per_testcase(_, _Config) ->
 %--- Test cases ----------------------------------------------------------------
 
 hex_core_cpe_test(_) ->
-    CPE = rebar3_sbom_cpe:hex(<<"hex_core">>, <<"1.0.0">>, undefined),
+    CPE = rebar3_sbom_cpe:cpe(<<"hex_core">>, <<"1.0.0">>, undefined),
     ?assertEqual(<<"cpe:2.3:a:hex:hex_core:1.0.0:*:*:*:*:*:*:*">>, CPE),
-    CPENoVersion = rebar3_sbom_cpe:hex(<<"hex_core">>, undefined, undefined),
+    CPENoVersion = rebar3_sbom_cpe:cpe(<<"hex_core">>, undefined, undefined),
     ?assertEqual(<<"cpe:2.3:a:hex:hex_core:*:*:*:*:*:*:*:*">>, CPENoVersion).
 
 plug_cpe_test(_) ->
-    CPE = rebar3_sbom_cpe:hex(<<"plug">>, <<"1.0.0">>, undefined),
+    CPE = rebar3_sbom_cpe:cpe(<<"plug">>, <<"1.0.0">>, undefined),
     ?assertEqual(<<"cpe:2.3:a:elixir-plug:plug:1.0.0:*:*:*:*:*:*:*">>, CPE),
-    CPENoVersion = rebar3_sbom_cpe:hex(<<"plug">>, undefined, undefined),
+    CPENoVersion = rebar3_sbom_cpe:cpe(<<"plug">>, undefined, undefined),
     ?assertEqual(<<"cpe:2.3:a:elixir-plug:plug:*:*:*:*:*:*:*:*">>, CPENoVersion).
 
 phoenix_cpe_test(_) ->
-    CPE = rebar3_sbom_cpe:hex(<<"phoenix">>, <<"1.0.0">>, undefined),
+    CPE = rebar3_sbom_cpe:cpe(<<"phoenix">>, <<"1.0.0">>, undefined),
     ?assertEqual(<<"cpe:2.3:a:phoenixframework:phoenix:1.0.0:*:*:*:*:*:*:*">>, CPE),
-    CPENoVersion = rebar3_sbom_cpe:hex(<<"phoenix">>, undefined, undefined),
+    CPENoVersion = rebar3_sbom_cpe:cpe(<<"phoenix">>, undefined, undefined),
     ?assertEqual(<<"cpe:2.3:a:phoenixframework:phoenix:*:*:*:*:*:*:*:*">>, CPENoVersion).
 
 coherence_cpe_test(_) ->
-    CPE = rebar3_sbom_cpe:hex(<<"coherence">>, <<"1.0.0">>, undefined),
+    CPE = rebar3_sbom_cpe:cpe(<<"coherence">>, <<"1.0.0">>, undefined),
     ?assertEqual(<<"cpe:2.3:a:coherence_project:coherence:1.0.0:*:*:*:*:*:*:*">>, CPE),
-    CPENoVersion = rebar3_sbom_cpe:hex(<<"coherence">>, undefined, undefined),
+    CPENoVersion = rebar3_sbom_cpe:cpe(<<"coherence">>, undefined, undefined),
     ?assertEqual(<<"cpe:2.3:a:coherence_project:coherence:*:*:*:*:*:*:*:*">>, CPENoVersion).
 
 xain_cpe_test(_) ->
-    CPE = rebar3_sbom_cpe:hex(<<"xain">>, <<"1.0.0">>, undefined),
+    CPE = rebar3_sbom_cpe:cpe(<<"xain">>, <<"1.0.0">>, undefined),
     ?assertEqual(<<"cpe:2.3:a:emetrotel:xain:1.0.0:*:*:*:*:*:*:*">>, CPE),
-    CPENoVersion = rebar3_sbom_cpe:hex(<<"xain">>, undefined, undefined),
+    CPENoVersion = rebar3_sbom_cpe:cpe(<<"xain">>, undefined, undefined),
     ?assertEqual(<<"cpe:2.3:a:emetrotel:xain:*:*:*:*:*:*:*:*">>, CPENoVersion).
 
 sweet_xml_cpe_test(_) ->
-    CPE = rebar3_sbom_cpe:hex(<<"sweet_xml">>, <<"1.0.0">>, undefined),
+    CPE = rebar3_sbom_cpe:cpe(<<"sweet_xml">>, <<"1.0.0">>, undefined),
     ?assertEqual(<<"cpe:2.3:a:kbrw:sweet_xml:1.0.0:*:*:*:*:*:*:*">>, CPE),
-    CPENoVersion = rebar3_sbom_cpe:hex(<<"sweet_xml">>, undefined, undefined),
+    CPENoVersion = rebar3_sbom_cpe:cpe(<<"sweet_xml">>, undefined, undefined),
     ?assertEqual(<<"cpe:2.3:a:kbrw:sweet_xml:*:*:*:*:*:*:*:*">>, CPENoVersion).
 
 erlang_otp_cpe_test(_) ->
-    CPE = rebar3_sbom_cpe:hex(<<"erlang/otp">>, <<"28.0">>, undefined),
+    CPE = rebar3_sbom_cpe:cpe(<<"erlang/otp">>, <<"28.0">>, undefined),
     ?assertEqual(<<"cpe:2.3:a:erlang:erlang\/otp:28.0:*:*:*:*:*:*:*">>, CPE),
-    CPENoVersion = rebar3_sbom_cpe:hex(<<"erlang/otp">>, undefined, undefined),
+    CPENoVersion = rebar3_sbom_cpe:cpe(<<"erlang/otp">>, undefined, undefined),
     ?assertEqual(<<"cpe:2.3:a:erlang:erlang\/otp:*:*:*:*:*:*:*:*">>, CPENoVersion).
 
 rebar3_cpe_test(_) ->
-    CPE = rebar3_sbom_cpe:hex(<<"rebar3">>, <<"3.14.1">>, undefined),
+    CPE = rebar3_sbom_cpe:cpe(<<"rebar3">>, <<"3.14.1">>, undefined),
     ?assertEqual(<<"cpe:2.3:a:erlang:rebar3:3.14.1:*:*:*:*:*:*:*">>, CPE),
-    CPENoVersion = rebar3_sbom_cpe:hex(<<"rebar3">>, undefined, undefined),
+    CPENoVersion = rebar3_sbom_cpe:cpe(<<"rebar3">>, undefined, undefined),
     ?assertEqual(<<"cpe:2.3:a:erlang:rebar3:*:*:*:*:*:*:*:*">>, CPENoVersion).
 
 elixir_cpe_test(_) ->
-    CPE = rebar3_sbom_cpe:hex(<<"elixir">>, <<"1.19.3">>, undefined),
+    CPE = rebar3_sbom_cpe:cpe(<<"elixir">>, <<"1.19.3">>, undefined),
     ?assertEqual(<<"cpe:2.3:a:elixir-lang:elixir:1.19.3:*:*:*:*:*:*:*">>, CPE),
-    CPENoVersion = rebar3_sbom_cpe:hex(<<"elixir">>, undefined, undefined),
+    CPENoVersion = rebar3_sbom_cpe:cpe(<<"elixir">>, undefined, undefined),
     ?assertEqual(<<"cpe:2.3:a:elixir-lang:elixir:*:*:*:*:*:*:*:*">>, CPENoVersion).
 
 default_behavior_test(_) ->
-    CPE = rebar3_sbom_cpe:hex(<<"my_package">>, <<"1.0.0">>, <<"https://github.com/my_org/my_package">>),
+    CPE = rebar3_sbom_cpe:cpe(<<"my_package">>, <<"1.0.0">>, <<"https://github.com/my_org/my_package">>),
     ?assertEqual(<<"cpe:2.3:a:my_org:my_package:1.0.0:*:*:*:*:*:*:*">>, CPE),
-    CPENoVersion = rebar3_sbom_cpe:hex(<<"my_package">>, undefined, <<"https://github.com/my_org/my_package">>),
+    CPENoVersion = rebar3_sbom_cpe:cpe(<<"my_package">>, undefined, <<"https://github.com/my_org/my_package">>),
     ?assertEqual(<<"cpe:2.3:a:my_org:my_package:*:*:*:*:*:*:*:*">>, CPENoVersion).
 
 no_url_test(_) ->
-    CPE = rebar3_sbom_cpe:hex(<<"non_hex_package">>, <<"1.0.0">>, undefined),
+    CPE = rebar3_sbom_cpe:cpe(<<"non_hex_package">>, <<"1.0.0">>, undefined),
     ?assertEqual(undefined, CPE).

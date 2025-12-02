@@ -1,6 +1,6 @@
 -module(rebar3_sbom_cpe).
 
--export([hex/3]).
+-export([cpe/3]).
 
 % Includes
 -include("rebar3_sbom.hrl").
@@ -25,60 +25,62 @@
 
 %--- API -----------------------------------------------------------------------
 
--spec hex(Name, Version, Url) -> CPE when
+-spec cpe(Name, Version, Url) -> CPE when
     Name :: bitstring(),
     Version :: bitstring(),
     Url :: bitstring() | undefined,
     CPE :: bitstring().
-hex(Name, undefined, Url) ->
-    hex(Name, <<"*">>, Url);
-hex(<<"hex_core">>, Version, _) ->
+cpe(Name, undefined, Url) ->
+    cpe(Name, <<"*">>, Url);
+cpe(<<"hex_core">>, Version, _) ->
     <<?CPE_PREFIX/binary, ":", ?CPE_PART_APPLICATION/binary,
       ":hex:hex_core:", Version/bitstring, ?CPE_POSTFIX/binary>>;
-hex(<<"plug">>, Version, _) ->
+cpe(<<"plug">>, Version, _) ->
     <<?CPE_PREFIX/binary, ":", ?CPE_PART_APPLICATION/binary,
       ":elixir-plug:plug:", Version/bitstring, ?CPE_POSTFIX/binary>>;
-hex(<<"phoenix">>, Version, _) ->
+cpe(<<"phoenix">>, Version, _) ->
     <<?CPE_PREFIX/binary, ":", ?CPE_PART_APPLICATION/binary,
       ":phoenixframework:phoenix:", Version/bitstring, ?CPE_POSTFIX/binary>>;
-hex(<<"coherence">>, Version, _) ->
+cpe(<<"coherence">>, Version, _) ->
     <<?CPE_PREFIX/binary, ":", ?CPE_PART_APPLICATION/binary,
       ":coherence_project:coherence:", Version/bitstring, ?CPE_POSTFIX/binary>>;
-hex(<<"xain">>, Version, _) ->
+cpe(<<"xain">>, Version, _) ->
     <<?CPE_PREFIX/binary, ":", ?CPE_PART_APPLICATION/binary,
       ":emetrotel:xain:", Version/bitstring, ?CPE_POSTFIX/binary>>;
-hex(<<"sweet_xml">>, Version, _) ->
+cpe(<<"sweet_xml">>, Version, _) ->
     <<?CPE_PREFIX/binary, ":", ?CPE_PART_APPLICATION/binary,
       ":kbrw:sweet_xml:", Version/bitstring, ?CPE_POSTFIX/binary>>;
-hex(<<"erlang/otp">>, Version, _) ->
+cpe(<<"erlang/otp">>, Version, _) ->
     <<?CPE_PREFIX/binary, ":", ?CPE_PART_APPLICATION/binary,
       ":erlang:erlang\/otp:", Version/bitstring, ?CPE_POSTFIX/binary>>;
-hex(<<"rebar3">>, Version, _) ->
+cpe(<<"rebar3">>, Version, _) ->
     <<?CPE_PREFIX/binary, ":", ?CPE_PART_APPLICATION/binary,
       ":erlang:rebar3:", Version/bitstring, ?CPE_POSTFIX/binary>>;
-hex(<<"elixir">>, Version, _) ->
+cpe(<<"elixir">>, Version, _) ->
     <<?CPE_PREFIX/binary, ":", ?CPE_PART_APPLICATION/binary,
       ":elixir-lang:elixir:", Version/bitstring, ?CPE_POSTFIX/binary>>;
-hex(_Name, _Version, undefined) ->
+cpe(_Name, _Version, undefined) ->
     undefined;
-hex(Name, Version, Url) ->
+cpe(Name, Version, Url) ->
     Organization = github_url(Url),
-    cpe(Organization, Name, Version).
+    build_cpe(Organization, Name, Version).
 
 %--- Private -------------------------------------------------------------------
 
 -spec github_url(Url) -> Organization when
     Url :: bitstring(),
     Organization :: bitstring().
-github_url(Url) ->
-    <<"https://github.com/", Rest/bitstring>> = Url,
+github_url(<<"https://github.com/", Rest/bitstring>>) ->
+    [Organization | _] = string:split(Rest, "/"),
+    Organization;
+github_url(<<"git@github.com:", Rest/bitstring>>) ->
     [Organization | _] = string:split(Rest, "/"),
     Organization.
 
--spec cpe(Organization, Name, Version) -> CPE when
+-spec build_cpe(Organization, Name, Version) -> CPE when
     Organization :: bitstring(),
     Name :: bitstring(),
     Version :: bitstring(),
     CPE :: bitstring().
-cpe(Organization, Name, Version) ->
+build_cpe(Organization, Name, Version) ->
     <<?CPE_PREFIX/binary, ":a:", Organization/binary, ":", Name/binary, ":", Version/bitstring, ?CPE_POSTFIX/binary>>.

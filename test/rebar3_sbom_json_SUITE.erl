@@ -44,6 +44,7 @@
 -export([no_sbom_licenses_test/1]).
 -export([metadata_component_empty_links_cpe_test/1]).
 -export([external_references_fallback_test/1]).
+-export([checkout_app_dependency_test/1]).
 
 % Includes
 -include_lib("common_test/include/ct.hrl").
@@ -125,7 +126,8 @@ groups() -> [{basic_app, [], [required_fields_test,
              {local_app, [], [no_sbom_manufacturer_test,
                               no_sbom_licenses_test,
                               metadata_component_empty_links_cpe_test,
-                              external_references_fallback_test]}].
+                              external_references_fallback_test,
+                              checkout_app_dependency_test]}].
 
 init_per_suite(Config) ->
     application:load(rebar3_sbom),
@@ -508,6 +510,20 @@ external_references_fallback_test(Config) ->
     #{<<"metadata">> := #{<<"component">> := Component}} = SBoMJSON,
     #{<<"externalReferences">> := ExternalReferences} = Component,
     ?assertMatch([#{<<"type">> := <<"release-notes">>, <<"url">> := <<"https://example.com/changelog">>}], ExternalReferences).
+
+checkout_app_dependency_test(Config) ->
+    SBoMJSON = ?config(sbom_json, Config),
+    #{<<"components">> := Components} = SBoMJSON,
+    Value = lists:search(fun(Component) ->
+        maps:get(<<"name">>, Component, undefined) =:= <<"checkout_app">>
+    end, Components),
+    ?assertMatch({value, _}, Value),
+    {_, Dependency} = Value,
+    check_component_constraints(Dependency),
+    ?assertMatch(#{<<"version">> := <<"0.1.0">>,
+                   <<"name">> := <<"checkout_app">>,
+                   <<"purl">> := <<"pkg:otp/checkout_app@0.1.0">>,
+                   <<"licenses">> := _}, Dependency).
 
 %--- Private -------------------------------------------------------------------
 get_app_dir(DataDir, AppName) ->

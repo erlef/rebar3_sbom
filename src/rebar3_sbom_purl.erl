@@ -2,7 +2,7 @@
 
 % https://github.com/package-url/purl-spec
 
--export([hex/2, git/3, github/2, bitbucket/2]).
+-export([hex/2, git/3, github/2, bitbucket/2, local_otp_app/2, local/2]).
 
 hex(Name, Version) ->
     purl(["hex", string:lowercase(Name)], Version).
@@ -42,6 +42,12 @@ github(Repo, Ref) ->
 bitbucket(Repo, Ref) ->
     [Organization, Name | _] = string:split(Repo, "/"),
     purl(["bitbucket", string:lowercase(Organization), string:lowercase(Name)], Ref).
+
+local_otp_app(Name, Version) ->
+    purl(["otp", string:lowercase(Name)], Version).
+
+local(Name, Version) ->
+    purl(["generic", string:lowercase(Name)], Version).
 
 purl(PathSegments, Version) ->
     Path = lists:join("/", [escape(Segment) || Segment <- PathSegments]),

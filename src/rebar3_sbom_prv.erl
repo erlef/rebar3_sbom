@@ -95,7 +95,6 @@ dep_info(Dep) ->
     Licenses = lists:usort(Licenses0 ++ HexMetadataLicenses),
     Links = proplists:get_value(links, Details, []),
     GitHubLink = get_github_link(HexMetadata, Links),
-    CPE = rebar3_sbom_cpe:hex(Name, list_to_binary(Version), GitHubLink),
     Common =
         [
          {authors, proplists:get_value(maintainers, Details, [])},
@@ -104,7 +103,7 @@ dep_info(Dep) ->
          {external_references, ExternalReferences},
          {dependencies, Deps},
          {scope, required},
-         {cpe, CPE}
+         {github_link, GitHubLink}
         ],
     dep_info(Name, Version, Source, Common).
 
@@ -177,45 +176,64 @@ valid_external_reference_types() ->
      "patent", "patent-family", "patent-assertion", "citation", "other"].
 
 dep_info(_Name, _Version, {pkg, Name, Version, Sha256}, Common) ->
+    GitHubLink = proplists:get_value(github_link, Common, undefined),
     [
         {name, Name},
         {version, Version},
         {purl, rebar3_sbom_purl:hex(Name, Version)},
-        {sha256, string:lowercase(Sha256)}
+        {sha256, string:lowercase(Sha256)},
+        {cpe, rebar3_sbom_cpe:cpe(Name, list_to_binary(Version), GitHubLink)}
     | Common ];
 
 dep_info(_Name, _Version, {pkg, Name, Version, _InnerChecksum, OuterChecksum, _RepoConfig}, Common) ->
+    GitHubLink = proplists:get_value(github_link, Common, undefined),
     [
         {name, Name},
         {version, Version},
         {purl, rebar3_sbom_purl:hex(Name, Version)},
-        {sha256, string:lowercase(OuterChecksum)}
+        {sha256, string:lowercase(OuterChecksum)},
+        {cpe, rebar3_sbom_cpe:cpe(Name, Version, GitHubLink)}
     | Common ];
 
 dep_info(Name, DepVersion, {git, Git, GitRef}, Common) ->
-    {Version, Purl} =
+    {Version, Purl, CPE} =
         case GitRef of
             {tag, Tag} ->
-                {Tag, rebar3_sbom_purl:git(Name, Git, Tag)};
+                GeneratedCPE = rebar3_sbom_cpe:cpe(Name, list_to_binary(Tag), list_to_binary(Git)),
+                {Tag, rebar3_sbom_purl:git(Name, Git, Tag), GeneratedCPE};
             {branch, Branch} ->
-                {DepVersion, rebar3_sbom_purl:git(Name, Git, Branch)};
+                GeneratedCPE = rebar3_sbom_cpe:cpe(Name, list_to_binary(Branch), list_to_binary(Git)),
+                {DepVersion, rebar3_sbom_purl:git(Name, Git, Branch), GeneratedCPE};
             {ref, Ref} ->
-                {DepVersion, rebar3_sbom_purl:git(Name, Git, Ref)}
+                GeneratedCPE = rebar3_sbom_cpe:cpe(Name, list_to_binary(Ref), list_to_binary(Git)),
+                {DepVersion, rebar3_sbom_purl:git(Name, Git, Ref), GeneratedCPE}
         end,
     [
      {name, Name},
      {version, Version},
-     {purl, Purl}
+     {purl, Purl},
+     {cpe, CPE}
     | maybe_update_licenses(Purl, Common) ];
 dep_info(Name, Version, {git_subdir, Git, Ref, _Dir}, Common) ->
     dep_info(Name, Version, {git, Git, Ref}, Common);
 
+dep_info(Name, Version, checkout, Common) ->
+    GitHubLink = proplists:get_value(github_link, Common, undefined),
+    [
+     {name, Name},
+     {version, Version},
+     {purl, rebar3_sbom_purl:local_otp_app(Name, Version)},
+     {cpe, rebar3_sbom_cpe:cpe(Name, list_to_binary(Version), GitHubLink)}
+    | Common ];
+
 dep_info(Name, Version, root_app, Common) ->
+    GitHubLink = proplists:get_value(github_link, Common, undefined),
     Purl = rebar3_sbom_purl:hex(Name, Version),
     [
      {name, Name},
      {version, Version},
-     {purl, Purl}
+     {purl, Purl},
+     {cpe, rebar3_sbom_cpe:cpe(Name, list_to_binary(Version), GitHubLink)}
     | Common ].
 
 filepath(?DEFAULT_OUTPUT, Format) ->
