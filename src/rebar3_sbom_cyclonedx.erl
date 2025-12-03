@@ -48,7 +48,7 @@ bom({FilePath, _} = FileInfo, IsStrictVersion, App, Plugin, Serial, MetadataInfo
     App :: proplists:proplist(),
     Plugin :: proplists:proplist(),
     MetadataInfo :: proplists:proplist(),
-    Metadata :: #metadata{}.
+    Metadata :: rebar3_sbom:metadata().
 metadata(App, Plugin, MetadataInfo) ->
     #metadata{
         timestamp = calendar:system_time_to_rfc3339(erlang:system_time(second)),
@@ -62,7 +62,7 @@ metadata(App, Plugin, MetadataInfo) ->
 -spec sbom_authors(Author, App) -> Authors when
     Author :: undefined | string(),
     App :: proplists:proplist(),
-    Authors :: [#individual{}].
+    Authors :: [rebar3_sbom:individual()].
 sbom_authors(undefined, App) ->
     case os:getenv("GITHUB_ACTOR") of
         false ->
@@ -76,7 +76,7 @@ sbom_authors(Author, _App) ->
 -spec sbom_licenses(LicensesIn, App) -> LicensesOut when
     LicensesIn :: undefined | [string()],
     App :: proplists:proplist(),
-    LicensesOut :: [#license{}].
+    LicensesOut :: [rebar3_sbom:license()].
 sbom_licenses(undefined, App) ->
     component_field(licenses, App);
 sbom_licenses(Licenses, _App) ->
@@ -144,7 +144,7 @@ license(Name) ->
 
 -spec manufacturer(ManufacturerIn) -> ManufacturerOut when
     ManufacturerIn :: undefined | map(),
-    ManufacturerOut :: #organization{} | undefined.
+    ManufacturerOut :: rebar3_sbom:organization() | undefined.
 manufacturer(undefined) ->
     undefined;
 manufacturer(Manufacturer) ->
@@ -155,7 +155,7 @@ manufacturer(Manufacturer) ->
         contact = individuals(maps:get(contact, Manufacturer, undefined))
     }.
 
--spec address(undefined | map()) -> undefined | #address{}.
+-spec address(undefined | map()) -> undefined | rebar3_sbom:address().
 address(undefined) ->
     undefined;
 address(AddressMap) ->
@@ -170,7 +170,7 @@ address(AddressMap) ->
 
 -spec individuals(IndividualsIn) -> IndividualsOut when
     IndividualsIn :: [string()],
-    IndividualsOut :: [#individual{}].
+    IndividualsOut :: [rebar3_sbom:individual()].
 individuals(undefined) ->
     [];
 individuals(Individuals) ->
@@ -187,7 +187,7 @@ individuals(Individuals) ->
 
 -spec authors(App) -> Authors when
     App :: proplists:proplist(),
-    Authors :: [#individual{}].
+    Authors :: [rebar3_sbom:individual()].
 authors(App) ->
     [#individual{name = Name} || Name <- proplists:get_value(authors, App, [])].
 
@@ -231,8 +231,8 @@ version({FilePath, Format}, IsStrictVersion, NewSBoM) ->
 
 -spec version(IsStrictVersion, {NewSBoM, OldSBoM}) -> Version when
     IsStrictVersion :: boolean(),
-    NewSBoM :: #sbom{},
-    OldSBoM :: #sbom{},
+    NewSBoM :: rebar3_sbom:sbom(),
+    OldSBoM :: rebar3_sbom:sbom(),
     Version :: integer().
 version(_, {_, OldSBoM}) when OldSBoM#sbom.version =:= 0 ->
     rebar_api:info(
@@ -240,12 +240,12 @@ version(_, {_, OldSBoM}) when OldSBoM#sbom.version =:= 0 ->
         [?DEFAULT_VERSION]
     ),
     ?DEFAULT_VERSION;
-version(IsStrictVersion, {_, OldSBoM}) when IsStrictVersion =:= false ->
+version(IsStrictVersion, {_, OldSBoM}) when not (IsStrictVersion) ->
     rebar_api:info(
         "Incrementing the SBoM version unconditionally: strict_version is set to false.", []
     ),
     OldSBoM#sbom.version + 1;
-version(IsStrictVersion, {NewSBoM, OldSBoM}) when IsStrictVersion =:= true ->
+version(IsStrictVersion, {NewSBoM, OldSBoM}) when not (IsStrictVersion) ->
     case is_sbom_equal(NewSBoM, OldSBoM) of
         true ->
             rebar_api:info(

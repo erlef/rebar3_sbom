@@ -1,6 +1,7 @@
 %% SPDX-License-Identifier: BSD-3-Clause
 %% SPDX-FileCopyrightText: 2024 Máté Lajkó
 %% SPDX-FileCopyrightText: 2025 Stritzinger GmbH
+%% SPDX-FileCopyrightText: 2025 Erlang Ecosystem Foundation
 
 -module(rebar3_sbom_json).
 
@@ -62,11 +63,11 @@ component_to_json(C) ->
 prune_content(Component) ->
     maps:filter(fun(_, Value) -> Value =/= undefined end, Component).
 
--spec individuals_to_json([#individual{}]) -> [#{name => binary()}].
+-spec individuals_to_json([rebar3_sbom:individual()]) -> [#{name => binary()}].
 individuals_to_json(Individuals) ->
     [individual_to_json(I) || I <- Individuals].
 
--spec individual_to_json(#individual{}) -> #{name => binary()}.
+-spec individual_to_json(rebar3_sbom:individual()) -> #{name => binary()}.
 individual_to_json(Individual) ->
     prune_content(#{
         name => bin(Individual#individual.name),
@@ -74,7 +75,7 @@ individual_to_json(Individual) ->
         phone => bin(Individual#individual.phone)
     }).
 
--spec metadata_to_json(#metadata{}) -> map().
+-spec metadata_to_json(rebar3_sbom:metadata()) -> map().
 metadata_to_json(Metadata) ->
     prune_content(#{
         timestamp => bin(Metadata#metadata.timestamp),
@@ -85,7 +86,7 @@ metadata_to_json(Metadata) ->
         licenses => licenses_to_json(Metadata#metadata.licenses)
     }).
 
--spec manufacturer_to_json(#organization{} | undefined) -> map() | undefined.
+-spec manufacturer_to_json(rebar3_sbom:organization() | undefined) -> map() | undefined.
 manufacturer_to_json(undefined) ->
     undefined;
 manufacturer_to_json(Manufacturer) ->
@@ -96,7 +97,7 @@ manufacturer_to_json(Manufacturer) ->
         contact => individuals_to_json(Manufacturer#organization.contact)
     }).
 
--spec address_to_json(#address{}) -> map().
+-spec address_to_json(rebar3_sbom:address()) -> map().
 address_to_json(Address) ->
     prune_content(#{
         country => bin(Address#address.country),
