@@ -78,7 +78,7 @@ individual_to_json(Individual) ->
 metadata_to_json(Metadata) ->
     prune_content(#{
         timestamp => bin(Metadata#metadata.timestamp),
-        tools => [component_to_json(T) || T <- Metadata#metadata.tools],
+        tools => #{components => [component_to_json(T) || T <- Metadata#metadata.tools]},
         component => component_to_json(Metadata#metadata.component),
         manufacturer => manufacturer_to_json(Metadata#metadata.manufacturer),
         authors => individuals_to_json(Metadata#metadata.authors),
@@ -102,9 +102,9 @@ address_to_json(Address) ->
         country => bin(Address#address.country),
         region => bin(Address#address.region),
         locality => bin(Address#address.locality),
-        post_office_box_number => bin(Address#address.post_office_box_number),
-        postal_code => bin(Address#address.postal_code),
-        street_address => bin(Address#address.street_address)
+        postOfficeBoxNumber => bin(Address#address.post_office_box_number),
+        postalCode => bin(Address#address.postal_code),
+        streetAddress => bin(Address#address.street_address)
     }).
 
 -spec urls_to_json([string()]) -> [string()].

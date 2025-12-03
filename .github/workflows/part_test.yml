@@ -96,9 +96,15 @@ jobs:
           otp-version: ${{ matrix.otp }}
           rebar3-version: ${{ needs.detectToolVersions.outputs.rebar3Version }}
 
+      - name: "Install Test OS Dependencies"
+        run: |
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          echo "PATH=$PATH" >> "$GITHUB_ENV"
+          brew tap cyclonedx/cyclonedx
+          brew install cyclonedx/cyclonedx/cyclonedx-cli
+
       - name: "Run CT Suites"
         run: rebar3 ct --cover
-        continue-on-error: ${{ matrix.unstable }}
 
       - name: "Create HTML Coverage Report"
         run: rebar3 cover
@@ -114,7 +120,7 @@ jobs:
           format: cobertura
           flag-name: ct-${{ matrix.name }}
           parallel: true
-      
+
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: coverage-ct-${{ matrix.name }}

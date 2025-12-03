@@ -205,7 +205,7 @@ end_per_suite(_Config) ->
     ok.
 
 init_per_group(basic_app, Config) ->
-    State = init_rebar_state(Config, "basic_app"),
+    State = rebar3_sbom_test_utils:init_rebar_state(Config, "basic_app"),
     PrivDir = ?config(priv_dir, Config),
     SBoMPath = filename:join(PrivDir, ?BASIC_APP_SBOM),
     Cmd = ["sbom", "-F", "json", "-o", SBoMPath, "-V", "false", "-a", "Jane Doe"],
@@ -225,7 +225,7 @@ init_per_group(basic_app, Config) ->
 init_per_group(basic_app_with_sbom, Config) ->
     % makes sure that new generated TS must be different
     timer:sleep(1000),
-    State = init_rebar_state(Config, "basic_app"),
+    State = rebar3_sbom_test_utils:init_rebar_state(Config, "basic_app"),
     SBoMPath = ?config(sbom_path, Config),
     Cmd = ["sbom", "-F", "json", "-o", SBoMPath, "-V", "false", "-f"],
     {ok, _FinalState} = rebar3:run(State, Cmd),
@@ -236,7 +236,7 @@ init_per_group(metadata, Config) ->
     #{<<"metadata">> := Metadata} = ?config(sbom_json, Config),
     [{metadata, Metadata} | Config];
 init_per_group(local_app, Config) ->
-    State = init_rebar_state(Config, "local_app"),
+    State = rebar3_sbom_test_utils:init_rebar_state(Config, "local_app"),
     PrivDir = ?config(priv_dir, Config),
     SBoMPath = filename:join(PrivDir, ?LOCAL_APP_SBOM),
     Cmd = ["sbom", "-F", "json", "-o", SBoMPath, "-V", "false", "-f"],
@@ -253,18 +253,22 @@ end_per_group(GroupName, Config) when
     DataDir = ?config(data_dir, Config),
     case GroupName of
         basic_app ->
-            AppDir = get_app_dir(DataDir, "basic_app"),
-            file:delete(filename:join(AppDir, "rebar.lock"));
+            AppDir = rebar3_sbom_test_utils:get_app_dir(DataDir, "basic_app"),
+            file:delete(filename:join(AppDir, "rebar.lock")),
+            BuildDir = rebar3_sbom_test_utils:build_dir_path(DataDir, "basic_app"),
+            file:delete(BuildDir);
         local_app ->
-            AppDir = get_app_dir(DataDir, "local_app"),
-            file:delete(filename:join(AppDir, "rebar.lock"))
+            AppDir = rebar3_sbom_test_utils:get_app_dir(DataDir, "local_app"),
+            file:delete(filename:join(AppDir, "rebar.lock")),
+            BuildDir = rebar3_sbom_test_utils:build_dir_path(DataDir, "local_app"),
+            file:delete(BuildDir)
     end;
 end_per_group(_, _Config) ->
     ok.
 
 init_per_testcase(github_actor_test, Config) ->
     os:putenv("GITHUB_ACTOR", "Bilbo Baggins"),
-    State = init_rebar_state(Config, "basic_app"),
+    State = rebar3_sbom_test_utils:init_rebar_state(Config, "basic_app"),
     SBoMPath = ?config(sbom_path, Config),
     Cmd = ["sbom", "-F", "json", "-o", SBoMPath, "-V", "false", "-f"],
     {ok, _FinalState} = rebar3:run(State, Cmd),
@@ -272,7 +276,7 @@ init_per_testcase(github_actor_test, Config) ->
     NewSBoMJSON = json:decode(File),
     [{sbom_json, NewSBoMJSON} | Config];
 init_per_testcase(default_author_test, Config) ->
-    State = init_rebar_state(Config, "basic_app"),
+    State = rebar3_sbom_test_utils:init_rebar_state(Config, "basic_app"),
     SBoMPath = ?config(sbom_path, Config),
     Cmd = ["sbom", "-F", "json", "-o", SBoMPath, "-V", "false", "-f"],
     {ok, _FinalState} = rebar3:run(State, Cmd),
@@ -280,7 +284,7 @@ init_per_testcase(default_author_test, Config) ->
     NewSBoMJSON = json:decode(File),
     [{sbom_json, NewSBoMJSON} | Config];
 init_per_testcase(empty_manufacturer_url_test, Config) ->
-    State = init_rebar_state(Config, "basic_app"),
+    State = rebar3_sbom_test_utils:init_rebar_state(Config, "basic_app"),
     PluginOpts = rebar_state:get(State, rebar3_sbom),
     Manufacturer = proplists:get_value(sbom_manufacturer, PluginOpts),
     NewPluginOpts = lists:keyreplace(
@@ -297,7 +301,7 @@ init_per_testcase(empty_manufacturer_url_test, Config) ->
     NewSBoMJSON = json:decode(File),
     [{sbom_json, NewSBoMJSON} | Config];
 init_per_testcase(manufacturer_empty_url_array_test, Config) ->
-    State = init_rebar_state(Config, "basic_app"),
+    State = rebar3_sbom_test_utils:init_rebar_state(Config, "basic_app"),
     PluginOpts = rebar_state:get(State, rebar3_sbom),
     Manufacturer = proplists:get_value(sbom_manufacturer, PluginOpts),
     NewPluginOpts = lists:keyreplace(
@@ -314,7 +318,7 @@ init_per_testcase(manufacturer_empty_url_array_test, Config) ->
     NewSBoMJSON = json:decode(File),
     [{sbom_json, NewSBoMJSON} | Config];
 init_per_testcase(metadata_component_hashes_test, Config) ->
-    State = init_rebar_state(Config, "basic_app"),
+    State = rebar3_sbom_test_utils:init_rebar_state(Config, "basic_app"),
     SBoMPath = ?config(sbom_path, Config),
     {ok, _} = rebar3:run(State, ["tar"]),
     ExpectedHash = get_tar_hash(?config(priv_dir, Config), "basic_app", "0.1.0"),
@@ -404,8 +408,8 @@ timestamp_test(Config) ->
 tools_test(Config) ->
     % Assume that in basic_app we only have a component for rebar3_sbom
     #{<<"tools">> := Tools} = ?config(metadata, Config),
-    ?assertMatch([_], Tools),
-    [Tool] = Tools,
+    ?assertMatch(#{<<"components">> := [_ | _]}, Tools),
+    #{<<"components">> := [Tool]} = Tools,
     check_component_constraints(Tool),
     #{
         <<"type">> := Type,
@@ -515,8 +519,8 @@ manufacturer_test(Config) ->
             <<"country">> := <<"Middle-earth">>,
             <<"region">> := <<"Shire">>,
             <<"locality">> := <<"Hobbiton">>,
-            <<"postal_code">> := <<"12345">>,
-            <<"street_address">> := <<"Bag End, Hobbiton, Shire">>
+            <<"postalCode">> := <<"12345">>,
+            <<"streetAddress">> := <<"Bag End, Hobbiton, Shire">>
         },
         Address
     ),
@@ -707,40 +711,6 @@ checkout_app_dependency_test(Config) ->
     ).
 
 %--- Private -------------------------------------------------------------------
-get_app_dir(DataDir, AppName) ->
-    SplitDataDir = filename:split(DataDir),
-    JoinedParentDir = filename:join(lists:droplast(SplitDataDir)),
-    AppDir = filename:join(JoinedParentDir, AppName),
-    true = filelib:is_dir(AppDir),
-    AppDir.
-
-init_rebar_state(Config, AppName) ->
-    DataDir = ?config(data_dir, Config),
-    PrivDir = ?config(priv_dir, Config),
-    AppDir = get_app_dir(DataDir, AppName),
-    BaseDir = build_dir_path(PrivDir, AppName),
-    State = rebar_state:new([
-        {base_dir, BaseDir},
-        {root_dir, AppDir}
-    ]),
-    RebarConfig = rebar_config:consult(AppDir),
-    State2 = rebar_state:new(State, RebarConfig, AppDir),
-    {ok, State3} = rebar3_sbom_prv:init(State2),
-    add_fake_plugin_dep(State3, DataDir).
-
-build_dir_path(PrivDir, AppName) ->
-    filename:join([PrivDir, "_build_" ++ AppName]).
-
-add_fake_plugin_dep(State, DataDir) ->
-    SplitDataDir = filename:split(DataDir),
-    [_ | ReversedPluginDir] = lists:dropwhile(
-        fun(Dir) -> Dir =/= "_build" end, lists:reverse(SplitDataDir)
-    ),
-    PluginDir = filename:join(lists:reverse(ReversedPluginDir)),
-    {ok, FakePluginEntry} = rebar_app_info:discover(PluginDir, State),
-    FakePluginEntry2 = rebar_app_info:source(FakePluginEntry, checkout),
-    rebar_state:all_plugin_deps(State, [FakePluginEntry2]).
-
 check_component_constraints(Component) ->
     check_component_cyclonedx_constraints(Component),
     check_component_ort_constraints(Component).

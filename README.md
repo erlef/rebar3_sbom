@@ -143,3 +143,15 @@ You can use either the standard CycloneDX type names or the community convention
     ]}
 ]}.
 ```
+
+Development
+-----------
+
+To run the full test suite locally, you need the CycloneDX CLI (`cyclonedx-cli`) available on your `PATH`, as it is used by `rebar3_sbom_validation_SUITE` to validate generated SBOMs.
+
+For example, on macOS or Linux with Homebrew:
+
+    brew tap cyclonedx/cyclonedx
+    brew install cyclonedx/cyclonedx/cyclonedx-cli
+
+More informations about the tool: https://github.com/CycloneDX/cyclonedx-cli
