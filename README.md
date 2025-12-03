@@ -11,7 +11,7 @@
 [![.github/workflows/branch_main.yml](https://github.com/erlef/rebar3_sbom/actions/workflows/branch_main.yml/badge.svg)](https://github.com/erlef/rebar3_sbom/actions/workflows/branch_main.yml)
 [![REUSE status](https://api.reuse.software/badge/github.com/erlef/rebar3_sbom)](https://api.reuse.software/info/github.com/erlef/rebar3_sbom)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/erlef/rebar3_sbom/badge)](https://scorecard.dev/viewer/?uri=github.com/erlef/rebar3_sbom)
-<!-- [![Coverage Status](https://coveralls.io/repos/github/erlef/rebar3_sbom/badge.svg?branch=main)](https://coveralls.io/github/erlef/rebar3_sbom?branch=main) -->
+[![Coverage Status](https://coveralls.io/repos/github/erlef/rebar3_sbom/badge.svg?branch=main)](https://coveralls.io/github/erlef/rebar3_sbom?branch=main)
 <!-- [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11509/badge)](https://www.bestpractices.dev/projects/11509) -->
 
 Generates a Software Bill-of-Materials (SBoM) in CycloneDX format

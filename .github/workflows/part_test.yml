@@ -75,7 +75,6 @@ jobs:
           - otp: "${{ needs.detectToolVersions.outputs.otpVersion }}"
             name: "latest"
             runs-on: ubuntu-latest
-            enable_coverage_export: "true"
             unstable: false
           # Test Main
           - otp: "${{ needs.detectToolVersions.outputs.otpVersion }}"
@@ -97,8 +96,45 @@ jobs:
           otp-version: ${{ matrix.otp }}
           rebar3-version: ${{ needs.detectToolVersions.outputs.rebar3Version }}
 
-      - run: rebar3 ct
+      - name: "Run CT Suites"
+        run: rebar3 ct --cover
         continue-on-error: ${{ matrix.unstable }}
+
+      - name: "Create HTML Coverage Report"
+        run: rebar3 cover
+
+      - name: "Convert Coverage to Cobertura XML"
+        run: rebar3 covertool generate
+
+      - name: Send Coverage to Coveralls
+        if: always()
+        uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b # v2.3.6
+        with:
+          file: "_build/test/covertool/rebar3_sbom.covertool.xml"
+          format: cobertura
+          flag-name: ct-${{ matrix.name }}
+          parallel: true
+      
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: coverage-ct-${{ matrix.name }}
+          path: "_build/test/cover/*"
+
+  finish_coverage:
+    name: Finish Coveralls Report
+
+    needs: ["ct"]
+
+    if: ${{ always() }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Coveralls Finished
+      uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b # v2.3.6
+      with:
+        parallel-finished: true
+        carryforward: "ct-lowest,ct-latest,ct-main"
 
   dialyzer:
     name: "Check Dialyzer"
