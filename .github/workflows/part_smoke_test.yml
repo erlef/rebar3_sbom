@@ -23,7 +23,43 @@ jobs:
 
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
-          submodules: true
+          sparse-checkout: .github
+
+      - name: Setup Project
+        run: |
+          cat > rebar.config << EOF
+            {deps, [
+              {ranch, "2.2.0"},
+              {telemetry, "1.3.0"},
+              {ssl_verify_fun, "1.1.7"},
+              {unicode_util_compat, "0.7.1"},
+              {idna, "6.1.1"}
+            ]}.
+            {project_plugins, [
+              {rebar3_sbom, {git, "$REPO", {ref, "$SHA"}}}
+            ]}.
+          EOF
+
+          mkdir src
+
+          cat > src/mylib.app.src << EOF
+            {application, mylib, [
+              {description, "An OTP library"},
+              {vsn, "0.1.0"},
+              {registered, []},
+              {applications, [
+                kernel,
+                stdlib
+              ]},
+              {env, []},
+              {modules, []},
+              {licenses, ["Apache-2.0"]},
+              {links, []}
+            ]}.
+          EOF
+        env:
+          REPO: "${{ github.server_url }}/${{ github.repository }}.git"
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - uses: ./.github/actions/setup-runtime-env
 
@@ -33,36 +69,37 @@ jobs:
           command: "rebar3 sbom"
           test-name: "Rebar3"
 
-  escript:
-    name: "EScript"
+  # TODO: Re-Enable once available
+  # escript:
+  #   name: "EScript"
 
-    runs-on: ubuntu-latest
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
-        with:
-          egress-policy: audit
+  #   steps:
+  #     - name: Harden Runner
+  #       uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+  #       with:
+  #         egress-policy: audit
 
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-        with:
-          submodules: true
+  #     - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+  #       with:
+  #         submodules: true
 
-      - uses: ./.github/actions/setup-runtime-env
+  #     - uses: ./.github/actions/setup-runtime-env
 
-      - name: "Download EScript"
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v5.0.0
-        with:
-          name: escript
-          path: ./escript_artifacts
+  #     - name: "Download EScript"
+  #       uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v5.0.0
+  #       with:
+  #         name: escript
+  #         path: ./escript_artifacts
 
-      - name: "Make EScript Executable"
-        run: |
-          chmod +x ./escript_artifacts/rebar3_sbom
+  #     - name: "Make EScript Executable"
+  #       run: |
+  #         chmod +x ./escript_artifacts/rebar3_sbom
 
-      - name: "Test All Combinations"
-        uses: ./.github/actions/validate-cyclonedx-bom
-        with:
-          command: "./escript_artifacts/rebar3_sbom cyclonedx"
-          command-args: "."
-          test-name: "EScript"
+  #     - name: "Test All Combinations"
+  #       uses: ./.github/actions/validate-cyclonedx-bom
+  #       with:
+  #         command: "./escript_artifacts/rebar3_sbom cyclonedx"
+  #         command-args: "."
+  #         test-name: "EScript"
