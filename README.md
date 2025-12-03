@@ -5,50 +5,60 @@
   SPDX-FileCopyrightText: 2025 Stritzinger GmbH
 -->
 
-rebar3_sbom
-===========
+# Rebar3 SBoM
+
+[![EEF Security WG project](https://img.shields.io/badge/EEF-Security-black)](https://github.com/erlef/security-wg)
+[![.github/workflows/branch_main.yml](https://github.com/erlef/rebar3_sbom/actions/workflows/branch_main.yml/badge.svg)](https://github.com/erlef/rebar3_sbom/actions/workflows/branch_main.yml)
+[![REUSE status](https://api.reuse.software/badge/github.com/erlef/rebar3_sbom)](https://api.reuse.software/info/github.com/erlef/rebar3_sbom)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/erlef/rebar3_sbom/badge)](https://scorecard.dev/viewer/?uri=github.com/erlef/rebar3_sbom)
+<!-- [![Coverage Status](https://coveralls.io/repos/github/erlef/rebar3_sbom/badge.svg?branch=main)](https://coveralls.io/github/erlef/rebar3_sbom?branch=main) -->
+<!-- [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11509/badge)](https://www.bestpractices.dev/projects/11509) -->
 
 Generates a Software Bill-of-Materials (SBoM) in CycloneDX format
 
-Use
----
+## Use
 
 Add rebar3_sbom to your rebar config, either in a project or globally in
-~/.config/rebar3/rebar.config:
+`~/.config/rebar3/rebar.config`:
 
-    {plugins, [rebar3_sbom]}.
+```erlang
+{plugins, [rebar3_sbom]}.
+```
 
-Then run the 'sbom' task on a project:
+Then run the `sbom` task on a project:
 
-    $ rebar3 sbom
-    ===> Verifying dependencies...
-    ===> CycloneDX SBoM written to bom.xml
+```
+$ rebar3 sbom
+===> Verifying dependencies...
+===> CycloneDX SBoM written to bom.xml
+```
 
-Configuration
--------------
+## Configuration
 
 You can configure additional SBoM metadata in your `rebar.config`:
 
-    {rebar3_sbom, [
-        {sbom_manufacturer, #{          % Optional, all fields inside are optional
-            name => "Your Organization",
-            url => ["https://example.com", "https://another-example.com"],
-            address => #{
-                country => "Country",
-                region => "State",
-                locality => "City",
-                post_office_box_number => "1",
-                postal_code => "12345",
-                street_address => "Street Address"
-            },
-            contact => [
-                #{name => "John Doe",
-                  email => "support@example.com",
-                  phone => "123456789"}
-            ]
-        }},
-        {sbom_licenses, ["Apache-2.0"]} % Optional
-    ]}.
+```erlang
+{rebar3_sbom, [
+    {sbom_manufacturer, #{          % Optional, all fields inside are optional
+        name => "Your Organization",
+        url => ["https://example.com", "https://another-example.com"],
+        address => #{
+            country => "Country",
+            region => "State",
+            locality => "City",
+            post_office_box_number => "1",
+            postal_code => "12345",
+            street_address => "Street Address"
+        },
+        contact => [
+            #{name => "John Doe",
+                email => "support@example.com",
+                phone => "123456789"}
+        ]
+    }},
+    {sbom_licenses, ["Apache-2.0"]} % Optional
+]}.
+```
 
 **Note:**
 - `sbom_manufacturer` (optional) identifies who is **producing the SBoM document**
@@ -61,8 +71,7 @@ You can configure additional SBoM metadata in your `rebar.config`:
   appear in `metadata.component.licenses`.
 
 
-Command Line Options
---------------------
+## Command Line Options
 
 The following command line options are supported:
 
@@ -82,32 +91,32 @@ By default only dependencies in the 'default' profile are included. To
 generate an SBoM covering development environments specify the relevant
 profiles using 'as':
 
-    $ rebar3 as default,test,docs sbom -o dev_bom.xml
+```bash
+$ rebar3 as default,test,docs sbom -o dev_bom.xml
+```
 
-Hash Generation
----------------
+## Hash Generation
 
 For the main component (`metadata.component`), the plugin computes the SHA-256 hash of the release tarball (`<name>-<version>.tar.gz`) found in the release directory.
 
 If the tarball does not exist (e.g., because `rebar3 tar` hasn't been run), no hash is included for the main component, and a warning is logged.
 
-CPE Generation
---------------
+## CPE Generation
 
 The plugin automatically generates a CPE (Common Platform Enumeration) identifier for the main component (`metadata.component`) using the GitHub link from your project's `.app.src` file. If no GitHub link is present, the CPE field is omitted from the SBoM.
 
 To ensure CPE generation, add a GitHub link to your `.app.src` file. For example:
 
+```erlang
+{application, my_app, [
+    ...
+    {links, [
+        {"GitHub", "https://github.com/your-org/my_app"}
+    ]}
+]}.
+```
 
-    {application, my_app, [
-        ...
-        {links, [
-            {"GitHub", "https://github.com/your-org/my_app"}
-        ]}
-    ]}.
-
-External References
--------------------
+## External References
 
 The plugin supports external references for components, which are automatically extracted from the `links` field in your `.app.src` file or from Hex metadata for dependencies.
 
@@ -123,13 +132,15 @@ All standard CycloneDX external reference types are supported. Additionally, for
 
 You can use either the standard CycloneDX type names or the community convention names in your `.app.src` file:
 
-    {application, my_app, [
-        ...
-        {links, [
-            {"GitHub", "https://github.com/example/my_app"},
-            {"Homepage", "https://example.com"},
-            {"Changelog", "https://github.com/example/my_app/releases"},
-            {"Issues", "https://github.com/example/my_app/issues"},
-            {"Documentation", "https://example.com/documentation"}
-        ]}
-    ]}.
+```erlang
+{application, my_app, [
+    ...
+    {links, [
+        {"GitHub", "https://github.com/example/my_app"},
+        {"Homepage", "https://example.com"},
+        {"Changelog", "https://github.com/example/my_app/releases"},
+        {"Issues", "https://github.com/example/my_app/issues"},
+        {"Documentation", "https://example.com/documentation"}
+    ]}
+]}.
+```
