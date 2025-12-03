@@ -28,6 +28,7 @@ in
       name = "Erlfmt Check";
       entry = "rebar3 fmt --check";
       files = "\\.(erl|hrl|app.src|config)$";
+      pass_filenames = false;
     };
   };
 }
