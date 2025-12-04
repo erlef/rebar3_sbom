@@ -3,7 +3,7 @@
 
 {application, rebar3_sbom, [
     {description, "Rebar3 plugin to generate CycloneDX SBoM"},
-    {vsn, "0.8.0"},
+    {vsn, "0.9.0-beta.1"},
     {registered, []},
     {applications, [
         kernel,
