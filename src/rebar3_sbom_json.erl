@@ -173,6 +173,17 @@ json_to_component_field(<<"licenses">> = F, Component) ->
     json_to_licenses(maps:get(F, Component, undefined));
 json_to_component_field(<<"externalReferences">> = F, Component) ->
     json_to_external_references(maps:get(F, Component, undefined));
+json_to_component_field(<<"scope">> = F, Component) ->
+    case maps:get(F, Component, undefined) of
+        undefined ->
+            undefined;
+        Scope ->
+            case Scope of
+                <<"required">> -> required;
+                <<"optional">> -> optional;
+                <<"excluded">> -> excluded
+            end
+    end;
 json_to_component_field(FieldName, Component) ->
     str(maps:get(FieldName, Component, undefined)).
 
@@ -181,8 +192,12 @@ json_to_authors(undefined) ->
 json_to_authors(Authors) ->
     [json_to_author(A) || A <- Authors].
 
-json_to_author(#{<<"name">> := Name}) ->
-    #{name => str(Name)}.
+json_to_author(Author) ->
+    #individual{
+        name = str(maps:get(<<"name">>, Author, undefined)),
+        email = str(maps:get(<<"email">>, Author, undefined)),
+        phone = str(maps:get(<<"phone">>, Author, undefined))
+    }.
 
 json_to_hashes(undefined) ->
     undefined;
