@@ -38,6 +38,7 @@ init(State) ->
         {example, "rebar3 sbom"},
         % list of options understood by the plugin
         {opts, [
+            {version, $v, "version", boolean, "show version information"},
             {format, $F, "format", {string, "xml"}, "file format, [xml|json]"},
             {output, $o, "output", {string, ?DEFAULT_OUTPUT},
                 "the full path to the SBoM output file"},
@@ -55,6 +56,15 @@ init(State) ->
 -spec do(rebar_state:t()) -> {ok, rebar_state:t()} | {error, string()}.
 do(State) ->
     {Args, _} = rebar_state:command_parsed_args(State),
+    case proplists:get_value(version, Args) of
+        true ->
+            print_version(),
+            {ok, State};
+        _ ->
+            do_sbom(State, Args)
+    end.
+
+do_sbom(State, Args) ->
     Format = proplists:get_value(format, Args),
     Output = proplists:get_value(output, Args),
     Force = proplists:get_value(force, Args),
@@ -415,3 +425,19 @@ hash(AppInfo, BaseDir) ->
 tar_path(BaseDir, Name, Version) ->
     TarFilename = io_lib:format("~s-~s.tar.gz", [Name, Version]),
     filename:join([BaseDir, "rel", Name, TarFilename]).
+
+print_version() ->
+    Version = get_version(),
+    rebar_api:console("rebar3_sbom ~s", [Version]).
+
+get_version() ->
+    case application:load(rebar3_sbom) of
+        ok ->
+            {ok, Version} = application:get_key(rebar3_sbom, vsn),
+            Version;
+        {error, {already_loaded, rebar3_sbom}} ->
+            {ok, Version} = application:get_key(rebar3_sbom, vsn),
+            Version;
+        {error, _} ->
+            "unknown"
+    end.
