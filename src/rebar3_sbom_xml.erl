@@ -138,10 +138,12 @@ individual_to_xml(IndividualType, Individual) ->
 hash_to_xml(#{alg := Alg, hash := Hash}) ->
     {hash, [{alg, Alg}], [Hash]}.
 
-license_to_xml(#{name := Name}) ->
-    {license, [{name, [Name]}]};
-license_to_xml(#{id := Id}) ->
-    {license, [{id, [Id]}]}.
+license_to_xml(License) ->
+    Content = prune_content([
+        {name, [License#license.name]},
+        {id, [License#license.id]}
+    ]),
+    {license, Content}.
 
 external_reference_to_xml(#external_reference{type = Type, url = Url}) ->
     {reference, [{type, Type}], [{url, [Url]}]}.
@@ -172,20 +174,26 @@ xml_to_component(Component) ->
     #component{
         type = Type,
         bom_ref = BomRef,
-        authors = replace_if_empty(Authors),
+        authors = Authors,
         name = xml_to_component_field(Name),
         version = xml_to_component_field(Version),
         description = xml_to_component_field(Description),
         scope = xml_to_component_field(Scope),
         purl = xml_to_component_field(Purl),
         cpe = xml_to_component_field(Cpe),
-        hashes = replace_if_empty(Hashes),
-        licenses = replace_if_empty(Licenses),
-        externalReferences = replace_if_empty(ExternalReferences)
+        hashes = Hashes,
+        licenses = Licenses,
+        externalReferences = ExternalReferences
     }.
 
 xml_to_component_field([]) ->
     undefined;
+xml_to_component_field([#xmlText{parents = [{scope, _} | _], value = Value}]) ->
+    case Value of
+        "required" -> required;
+        "optional" -> optional;
+        "excluded" -> excluded
+    end;
 xml_to_component_field([#xmlText{value = Value}]) ->
     Value.
 
@@ -206,16 +214,11 @@ xml_to_external_reference(ExternalReferenceElement) ->
 xml_to_license(LicenseElement) ->
     case xpath("/license/id/text()", LicenseElement) of
         [Value] ->
-            #{id => Value#xmlText.value};
+            #license{id = Value#xmlText.value};
         [] ->
             [Value] = xpath("/license/name/text()", LicenseElement),
-            #{name => Value#xmlText.value}
+            #license{name = Value#xmlText.value}
     end.
 
 xpath(String, Xml) ->
     xmerl_xpath:string(String, Xml).
-
-replace_if_empty([]) ->
-    undefined;
-replace_if_empty(List) ->
-    List.

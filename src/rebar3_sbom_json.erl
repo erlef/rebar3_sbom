@@ -128,10 +128,13 @@ external_reference_to_json(#external_reference{type = Type, url = Url}) ->
 licenses_to_json(Licenses) ->
     [license_to_json(L) || L <- Licenses].
 
-license_to_json(#{name := Name}) ->
-    #{license => #{name => bin(Name)}};
-license_to_json(#{id := Id}) ->
-    #{license => #{id => bin(Id)}}.
+license_to_json(License) ->
+    #{
+        license => prune_content(#{
+            name => bin(License#license.name),
+            id => bin(License#license.id)
+        })
+    }.
 
 dependency_to_json(D) ->
     #{
@@ -173,6 +176,17 @@ json_to_component_field(<<"licenses">> = F, Component) ->
     json_to_licenses(maps:get(F, Component, undefined));
 json_to_component_field(<<"externalReferences">> = F, Component) ->
     json_to_external_references(maps:get(F, Component, undefined));
+json_to_component_field(<<"scope">> = F, Component) ->
+    case maps:get(F, Component, undefined) of
+        undefined ->
+            undefined;
+        Scope ->
+            case Scope of
+                <<"required">> -> required;
+                <<"optional">> -> optional;
+                <<"excluded">> -> excluded
+            end
+    end;
 json_to_component_field(FieldName, Component) ->
     str(maps:get(FieldName, Component, undefined)).
 
@@ -181,8 +195,12 @@ json_to_authors(undefined) ->
 json_to_authors(Authors) ->
     [json_to_author(A) || A <- Authors].
 
-json_to_author(#{<<"name">> := Name}) ->
-    #{name => str(Name)}.
+json_to_author(Author) ->
+    #individual{
+        name = str(maps:get(<<"name">>, Author, undefined)),
+        email = str(maps:get(<<"email">>, Author, undefined)),
+        phone = str(maps:get(<<"phone">>, Author, undefined))
+    }.
 
 json_to_hashes(undefined) ->
     undefined;
@@ -197,10 +215,11 @@ json_to_licenses(undefined) ->
 json_to_licenses(Licenses) ->
     [json_to_license(L) || L <- Licenses].
 
-json_to_license(#{<<"license">> := #{<<"id">> := Id}}) ->
-    #{id => str(Id)};
-json_to_license(#{<<"license">> := #{<<"name">> := Name}}) ->
-    #{name => str(Name)}.
+json_to_license(#{<<"license">> := License}) ->
+    #license{
+        id = str(maps:get(<<"id">>, License, undefined)),
+        name = str(maps:get(<<"name">>, License, undefined))
+    }.
 
 json_to_external_references(undefined) ->
     undefined;

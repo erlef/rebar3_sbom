@@ -18,6 +18,7 @@
 -export([empty_manufacturer_url_test/1]).
 -export([manufacturer_empty_url_array_test/1]).
 -export([metadata_component_hashes_test/1]).
+-export([strict_version_test/1]).
 
 % metadata group test cases
 -export([timestamp_test/1]).
@@ -152,6 +153,7 @@ groups() ->
             version_test,
             {group, metadata},
             {group, components},
+            strict_version_test,
             {group, basic_app_with_sbom},
             github_actor_test,
             default_author_test,
@@ -327,6 +329,14 @@ init_per_testcase(metadata_component_hashes_test, Config) ->
     {ok, File} = file:read_file(SBoMPath),
     NewSBoMJSON = json:decode(File),
     [{sbom_json, NewSBoMJSON}, {expected_hash, ExpectedHash} | Config];
+init_per_testcase(strict_version_test, Config) ->
+    State = rebar3_sbom_test_utils:init_rebar_state(Config, "basic_app"),
+    SBoMPath = ?config(sbom_path, Config),
+    Cmd = ["sbom", "-F", "json", "-o", SBoMPath, "-V", "true", "-f"],
+    {ok, _FinalState} = rebar3:run(State, Cmd),
+    {ok, File} = file:read_file(SBoMPath),
+    NewSBoMJSON = json:decode(File),
+    [{sbom_json, NewSBoMJSON} | Config];
 init_per_testcase(_, Config) ->
     Config.
 
@@ -391,6 +401,11 @@ metadata_component_hashes_test(Config) ->
         },
         Hash
     ).
+
+strict_version_test(Config) ->
+    SBoMJSON = ?config(sbom_json, Config),
+    #{<<"version">> := Version} = SBoMJSON,
+    ?assertEqual(1, Version, "Version should not increase in strict mode if the SBoM is the same").
 
 %--- metadata group ---
 timestamp_test(Config) ->
@@ -801,7 +816,12 @@ check_purl_format(Purl) ->
 check_licenses_constraints(Licenses) ->
     lists:foreach(
         fun(License) ->
-            ?assertMatch(#{<<"license">> := #{<<"id">> := _}}, License)
+            ?assertMatch(#{<<"license">> := _}, License),
+            #{<<"license">> := LicenseContent} = License,
+            ?assert(
+                maps:is_key(<<"id">>, LicenseContent) orelse
+                    maps:is_key(<<"name">>, LicenseContent)
+            )
         end,
         Licenses
     ).

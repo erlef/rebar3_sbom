@@ -135,12 +135,14 @@ component_field(Field, RawComponent) ->
             Else
     end.
 
+license(Name) when is_binary(Name) ->
+    license(binary:bin_to_list(Name));
 license(Name) ->
     case rebar3_sbom_license:spdx_id(Name) of
         undefined ->
-            #{name => Name};
+            #license{name = Name};
         SpdxId ->
-            #{id => SpdxId}
+            #license{id = SpdxId}
     end.
 
 -spec manufacturer(ManufacturerIn) -> ManufacturerOut when

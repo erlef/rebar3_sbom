@@ -55,10 +55,10 @@
 
 % Not adding Text, URL, Licensing for now
 -record(license, {
-    bom_ref :: bom_ref(),
-    id :: spdx_licence_id(),
-    name :: string(),
-    acknowledgement :: declared | concluded,
+    bom_ref :: bom_ref() | undefined,
+    id :: spdx_licence_id() | undefined,
+    name :: string() | undefined,
+    acknowledgement :: declared | concluded | undefined,
     properties = [] :: properties()
 }).
 
