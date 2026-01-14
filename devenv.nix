@@ -30,5 +30,12 @@ in
       files = "\\.(erl|hrl|app.src|config)$";
       pass_filenames = false;
     };
+    elvis = {
+      enable = true;
+      name = "Elvis Linter";
+      entry = "rebar3 lint";
+      files = "\\.(erl|hrl)$";
+      pass_filenames = false;
+    };
   };
 }
