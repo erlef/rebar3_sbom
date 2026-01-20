@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: 2026 Erlang Ecosystem Foundation
+
+excludes:
+  scopes:
+    - pattern: "excluded"
+      reason: "DEV_DEPENDENCY_OF"
+      comment: "Development dependencies not included in production builds"
+  paths:
+    # CI/CD and build configuration
+    - pattern: ".github/**"
+      reason: "BUILD_TOOL_OF"
+      comment: "GitHub Actions workflows and configuration"
+    - pattern: "devenv.*"
+      reason: "BUILD_TOOL_OF"
+      comment: "Devenv configuration"
+    - pattern: ".envrc"
+      reason: "BUILD_TOOL_OF"
+      comment: "Direnv configuration"
+    - pattern: ".tool-versions"
+      reason: "BUILD_TOOL_OF"
+      comment: "asdf version manager configuration"
+
+    # Documentation
+    - pattern: "README.md"
+      reason: "DOCUMENTATION_OF"
+      comment: "Project readme"
+
+    # Tests
+    - pattern: "test/**"
+      reason: "TEST_OF"
+      comment: "Test files"
+
+    # License metadata files
+    - pattern: "REUSE.toml"
+      reason: "DOCUMENTATION_OF"
+      comment: "REUSE configuration"
