@@ -12,16 +12,6 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: "Build"
-    
-    permissions:
-      id-token: write
-      contents: read
-      attestations: write
-
-    uses: ./.github/workflows/part_build.yml
-
   licensing:
     name: "Licensing"
 
@@ -45,7 +35,7 @@ jobs:
   release:
     name: Create Release
 
-    needs: ["build", "licensing", "docs"]
+    needs: ["licensing", "docs"]
 
     permissions:
       contents: write

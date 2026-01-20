@@ -21,16 +21,6 @@ jobs:
 
     uses: ./.github/workflows/part_test.yml
 
-  build:
-    name: "Build"
-    
-    permissions:
-      id-token: write
-      contents: read
-      attestations: write
-
-    uses: ./.github/workflows/part_build.yml
-
   licensing:
     name: "Licensing"
 
@@ -53,8 +43,6 @@ jobs:
 
   smoke_test:
     name: "Smoke Test"
-
-    needs: ['build']
 
     permissions:
       id-token: write
