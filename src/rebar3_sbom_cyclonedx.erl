@@ -10,9 +10,18 @@
 
 -include("rebar3_sbom.hrl").
 
+-moduledoc """
+Builds a CycloneDX SBoM from the application, its dependencies, and metadata.
+
+License IDs are resolved via `m:rebar3_sbom_license`.
+""".
+
+-doc "Builds a CycloneDX SBoM; serial (UUID) is generated automatically.".
+-doc #{equiv => bom/6}.
 bom(FileInfo, IsStrictVersion, App, Plugin, MetadataInfo) ->
     bom(FileInfo, IsStrictVersion, App, Plugin, uuid(), MetadataInfo).
 
+-doc "Builds a CycloneDX SBoM with the given serial (UUID).".
 bom({FilePath, _} = FileInfo, IsStrictVersion, App, Plugin, Serial, MetadataInfo) ->
     {AppInfo, RawComponents} = App,
     {PluginInfo, PluginDepsInfo} = Plugin,
