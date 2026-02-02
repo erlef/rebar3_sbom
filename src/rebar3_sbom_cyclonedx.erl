@@ -17,7 +17,7 @@ License IDs are resolved via `m:rebar3_sbom_license`.
 """.
 
 -doc "Builds a CycloneDX SBoM; serial (UUID) is generated automatically.".
--doc #{equiv => bom/6}.
+-doc #{equiv => bom / 6}.
 bom(FileInfo, IsStrictVersion, App, Plugin, MetadataInfo) ->
     bom(FileInfo, IsStrictVersion, App, Plugin, uuid(), MetadataInfo).
 
