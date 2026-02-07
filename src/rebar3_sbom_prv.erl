@@ -11,6 +11,17 @@
 
 -include("rebar3_sbom.hrl").
 
+-moduledoc """
+Rebar3 provider that implements the `rebar3 sbom` command (generates a CycloneDX SBoM).
+
+Builds a CycloneDX SBoM from project and dependency metadata
+(via `rebar3_sbom_cyclonedx:bom/5`), then encodes it with `m:rebar3_sbom_xml`
+or `m:rebar3_sbom_json` and writes to the path given by `--output`
+(default `./bom.xml` or `./bom.json`). PURL and CPE for components come from
+`m:rebar3_sbom_purl` and `m:rebar3_sbom_cpe`; license IDs from
+`m:rebar3_sbom_license`.
+""".
+
 %--- Macros --------------------------------------------------------------------
 -define(CUSTOM_MAPPING, #{
     "github" => "vcs",
@@ -52,6 +63,10 @@ init(State) ->
     ]),
     {ok, rebar_state:add_provider(State, Provider)}.
 
+-doc """
+Builds the SBoM via `rebar3_sbom_cyclonedx:bom/5`, encodes it (XML or JSON),
+and writes the output file (see `m:rebar3_sbom_xml` or `m:rebar3_sbom_json`).
+""".
 -spec do(rebar_state:t()) -> {ok, rebar_state:t()} | {error, string()}.
 do(State) ->
     {Args, _} = rebar_state:command_parsed_args(State),
@@ -96,6 +111,7 @@ do(State) ->
             {error, {?MODULE, Message}}
     end.
 
+-doc "Formats provider errors for display to the user.".
 -spec format_error(any()) -> iolist().
 format_error(Message) ->
     io_lib:format("~s", [Message]).
