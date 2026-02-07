@@ -58,7 +58,7 @@ jobs:
             ]}.
           EOF
         env:
-          REPO: "${{ github.server_url }}/${{ github.repository }}.git"
+          REPO: "${{ github.server_url }}/${{ github.event.pull_request.head.repo.full_name || github.repository }}.git"
           SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - uses: ./.github/actions/setup-runtime-env
