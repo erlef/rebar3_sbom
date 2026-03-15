@@ -337,7 +337,7 @@ filepath(Path, _Format) ->
     Path.
 
 write_file(Filename, Contents, true) ->
-    file:write_file(Filename, Contents);
+    file:write_file(Filename, unicode:characters_to_binary(Contents));
 write_file(Filename, Xml, false) ->
     case file:read_file_info(Filename) of
         {error, enoent} ->
