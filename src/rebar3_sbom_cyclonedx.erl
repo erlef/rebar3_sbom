@@ -130,7 +130,7 @@ component_field(external_references = Field, RawComponent) ->
 component_field(Field, RawComponent) ->
     case proplists:get_value(Field, RawComponent) of
         Value when is_binary(Value) ->
-            binary:bin_to_list(Value);
+            unicode:characters_to_list(Value);
         Else ->
             Else
     end.
