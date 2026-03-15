@@ -72,7 +72,7 @@ app_component(App, OtpRelease) ->
         end,
     Licenses =
         case application:get_key(App, licenses) of
-            {ok, L} -> [list_to_binary(Li) || Li <- L];
+            {ok, L} -> [unicode:characters_to_binary(Li) || Li <- L];
             undefined -> [<<"Apache-2.0">>]
         end,
     [

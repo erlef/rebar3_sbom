@@ -232,6 +232,6 @@ json_to_external_reference(#{<<"type">> := Type, <<"url">> := Url}) ->
 str(undefined) ->
     undefined;
 str(Value) when is_binary(Value) ->
-    erlang:binary_to_list(Value);
+    unicode:characters_to_list(Value);
 str(Value) ->
     Value.
