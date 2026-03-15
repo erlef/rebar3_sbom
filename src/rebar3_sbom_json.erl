@@ -145,7 +145,7 @@ dependency_to_json(D) ->
 bin(undefined) ->
     undefined;
 bin(Value) when is_list(Value) ->
-    erlang:list_to_binary(Value);
+    unicode:characters_to_binary(Value);
 bin(Value) ->
     Value.
 

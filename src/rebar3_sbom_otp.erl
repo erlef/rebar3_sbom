@@ -67,7 +67,7 @@ app_component(App, OtpRelease) ->
         end,
     Description =
         case application:get_key(App, description) of
-            {ok, Desc} -> list_to_binary(Desc);
+            {ok, Desc} -> unicode:characters_to_binary(Desc);
             undefined -> <<>>
         end,
     Licenses =
