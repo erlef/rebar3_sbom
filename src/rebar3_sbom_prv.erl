@@ -45,7 +45,9 @@ init(State) ->
                 "overwite existing files without prompting for confirmation"},
             {strict_version, $V, "strict_version", {boolean, true},
                 "modify the version number of the BoM only when the content changes"},
-            {author, $a, "author", string, "the author of the SBoM"}
+            {author, $a, "author", string, "the author of the SBoM"},
+            {include_otp, undefined, "include-otp", {boolean, false},
+                "include OTP/ERTS runtime components in the SBoM"}
         ]},
         {short_desc, "Generates CycloneDX SBoM"},
         {desc, "Generates a Software Bill-of-Materials (SBoM) in CycloneDX format"}
@@ -71,15 +73,25 @@ do(State) ->
     PluginInfo = dep_info(Plugin),
     PluginDepsInfo = [dep_info(Dep) || Dep <- PluginDeps],
 
+    PluginOpts = rebar_state:get(State, rebar3_sbom, []),
+    IncludeOtp =
+        proplists:get_value(include_otp, Args) orelse
+            proplists:get_value(include_otp, PluginOpts, false),
+
     FilePath = filepath(Output, Format),
     DepsInfo = [dep_info(Dep) || Dep <- rebar_state:all_deps(State)],
+    OtpComponents =
+        case IncludeOtp of
+            true -> rebar3_sbom_otp:otp_components();
+            false -> []
+        end,
     AppInfo = dep_info(App),
     AppInfo2 = [{sha256, hash(AppInfo, rebar_dir:base_dir(State))} | AppInfo],
     MetadataInfo = metadata(State),
     SBoM = rebar3_sbom_cyclonedx:bom(
         {FilePath, Format},
         IsStrictVersion,
-        {AppInfo2, DepsInfo},
+        {AppInfo2, DepsInfo ++ OtpComponents},
         {PluginInfo, PluginDepsInfo},
         MetadataInfo
     ),

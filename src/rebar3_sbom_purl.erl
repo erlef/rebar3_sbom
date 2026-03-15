@@ -8,7 +8,7 @@
 
 % https://github.com/package-url/purl-spec
 
--export([hex/2, git/3, github/2, bitbucket/2, local_otp_app/2, local/2]).
+-export([hex/2, git/3, github/2, bitbucket/2, local_otp_app/2, local/2, otp_runtime/2]).
 
 hex(Name, Version) ->
     purl(["hex", string:lowercase(Name)], Version).
@@ -48,6 +48,9 @@ local_otp_app(Name, Version) ->
 
 local(Name, Version) ->
     purl(["generic", string:lowercase(Name)], Version).
+
+otp_runtime(Name, Version) ->
+    purl(["generic", "erlang-" ++ string:lowercase(Name)], Version).
 
 purl(PathSegments, Version) ->
     Path = lists:join("/", [escape(Segment) || Segment <- PathSegments]),
