@@ -97,8 +97,8 @@ local_purl_test(_) ->
 
 otp_runtime_purl_test(_) ->
     Purl = rebar3_sbom_purl:otp_runtime(<<"erlang/otp">>, <<"28">>),
-    ?assertEqual(<<"pkg:generic/erlang-erlang%2Fotp@28">>, Purl),
+    ?assertEqual(<<"pkg:otp/erlang%2Fotp@28">>, Purl),
     ErtsPurl = rebar3_sbom_purl:otp_runtime(<<"erts">>, <<"15.2">>),
-    ?assertEqual(<<"pkg:generic/erlang-erts@15.2">>, ErtsPurl),
+    ?assertEqual(<<"pkg:otp/erts@15.2">>, ErtsPurl),
     KernelPurl = rebar3_sbom_purl:otp_runtime(<<"kernel">>, <<"10.2">>),
-    ?assertEqual(<<"pkg:generic/erlang-kernel@10.2">>, KernelPurl).
+    ?assertEqual(<<"pkg:otp/kernel@10.2">>, KernelPurl).

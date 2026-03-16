@@ -291,15 +291,13 @@ dep_info(Name, _DepVersion, {git, Git, GitRef}, Common) ->
     {Version, Purl, CPE} =
         case GitRef of
             {tag, Tag} ->
-                GeneratedCPE = rebar3_sbom_cpe:cpe(Name, unicode:characters_to_binary(Tag), unicode:characters_to_binary(Git)),
+                GeneratedCPE = rebar3_sbom_cpe:cpe(Name, to_binary(Tag), to_binary(Git)),
                 {Tag, rebar3_sbom_purl:git(Name, Git, Tag), GeneratedCPE};
             {branch, Branch} ->
-                GeneratedCPE = rebar3_sbom_cpe:cpe(
-                    Name, unicode:characters_to_binary(Branch), unicode:characters_to_binary(Git)
-                ),
+                GeneratedCPE = rebar3_sbom_cpe:cpe(Name, to_binary(Branch), to_binary(Git)),
                 {Branch, rebar3_sbom_purl:git(Name, Git, Branch), GeneratedCPE};
             {ref, Ref} ->
-                GeneratedCPE = rebar3_sbom_cpe:cpe(Name, unicode:characters_to_binary(Ref), unicode:characters_to_binary(Git)),
+                GeneratedCPE = rebar3_sbom_cpe:cpe(Name, to_binary(Ref), to_binary(Git)),
                 {Ref, rebar3_sbom_purl:git(Name, Git, Ref), GeneratedCPE}
         end,
     [
@@ -427,3 +425,7 @@ hash(AppInfo, BaseDir) ->
 tar_path(BaseDir, Name, Version) ->
     TarFilename = io_lib:format("~s-~s.tar.gz", [Name, Version]),
     filename:join([BaseDir, "rel", Name, TarFilename]).
+
+to_binary(V) when is_atom(V) -> atom_to_binary(V);
+to_binary(V) when is_list(V) -> unicode:characters_to_binary(V);
+to_binary(V) when is_binary(V) -> V.

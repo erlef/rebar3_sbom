@@ -11,29 +11,27 @@
 -export([hex/2, git/3, github/2, bitbucket/2, local_otp_app/2, local/2, otp_runtime/2]).
 
 hex(Name, Version) ->
-    purl(["hex", string:lowercase(Name)], Version).
+    purl(["hex", string:lowercase(to_list(Name))], to_list(Version)).
 
-git(_Name, "git@github.com:" ++ Github, Ref) ->
-    Repo = string:replace(Github, ".git", "", trailing),
-    github(Repo, Ref);
-git(_Name, "https://github.com/" ++ Github, Ref) ->
-    Repo = string:replace(Github, ".git", "", trailing),
-    github(Repo, Ref);
-git(_Name, "git://github.com/" ++ Github, Ref) ->
-    Repo = string:replace(Github, ".git", "", trailing),
-    github(Repo, Ref);
-git(_Name, "git@bitbucket.org:" ++ Github, Ref) ->
-    Repo = string:replace(Github, ".git", "", trailing),
-    bitbucket(Repo, Ref);
-git(_Name, "https://bitbucket.org/" ++ Github, Ref) ->
-    Repo = string:replace(Github, ".git", "", trailing),
-    bitbucket(Repo, Ref);
-git(_Name, "git://bitbucket.org/" ++ Github, Ref) ->
-    Repo = string:replace(Github, ".git", "", trailing),
-    bitbucket(Repo, Ref);
-%% Git dependence other than GitHub and BitBucket are not currently supported
-git(_Name, _Git, _R) ->
-    undefined.
+git(_Name, Git0, Ref0) ->
+    Git = to_list(Git0),
+    Ref = to_list(Ref0),
+    case Git of
+        "git@github.com:" ++ Path ->
+            github(string:replace(Path, ".git", "", trailing), Ref);
+        "https://github.com/" ++ Path ->
+            github(string:replace(Path, ".git", "", trailing), Ref);
+        "git://github.com/" ++ Path ->
+            github(string:replace(Path, ".git", "", trailing), Ref);
+        "git@bitbucket.org:" ++ Path ->
+            bitbucket(string:replace(Path, ".git", "", trailing), Ref);
+        "https://bitbucket.org/" ++ Path ->
+            bitbucket(string:replace(Path, ".git", "", trailing), Ref);
+        "git://bitbucket.org/" ++ Path ->
+            bitbucket(string:replace(Path, ".git", "", trailing), Ref);
+        _ ->
+            undefined
+    end.
 
 github(Repo, Ref) ->
     [Organization, Name | _] = string:split(Repo, "/"),
@@ -44,13 +42,13 @@ bitbucket(Repo, Ref) ->
     purl(["bitbucket", string:lowercase(Organization), string:lowercase(Name)], Ref).
 
 local_otp_app(Name, Version) ->
-    purl(["otp", string:lowercase(Name)], Version).
+    purl(["otp", string:lowercase(to_list(Name))], to_list(Version)).
 
 local(Name, Version) ->
-    purl(["generic", string:lowercase(Name)], Version).
+    purl(["generic", string:lowercase(to_list(Name))], to_list(Version)).
 
 otp_runtime(Name, Version) ->
-    purl(["generic", "erlang-" ++ string:lowercase(Name)], Version).
+    purl(["otp", string:lowercase(to_list(Name))], to_list(Version)).
 
 purl(PathSegments, Version) ->
     Path = lists:join("/", [escape(Segment) || Segment <- PathSegments]),
@@ -59,11 +57,15 @@ purl(PathSegments, Version) ->
 -if(?OTP_RELEASE >= 25).
 
 escape(String) ->
-    uri_string:quote(String).
+    uri_string:quote(to_list(String)).
 
 -else.
 
 escape(String) ->
-    http_uri:encode(String).
+    http_uri:encode(to_list(String)).
 
 -endif.
+
+to_list(V) when is_atom(V) -> atom_to_list(V);
+to_list(V) when is_binary(V) -> binary_to_list(V);
+to_list(V) when is_list(V) -> V.
