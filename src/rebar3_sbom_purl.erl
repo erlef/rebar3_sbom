@@ -8,7 +8,7 @@
 
 % https://github.com/package-url/purl-spec
 
--export([hex/2, git/3, github/2, bitbucket/2, local_otp_app/2, local/2, otp_runtime/2]).
+-export([hex/2, git/3, github/2, bitbucket/2, local_otp_app/2, local/2, otp_runtime/3]).
 
 hex(Name, Version) ->
     purl(["hex", string:lowercase(to_list(Name))], to_list(Version)).
@@ -47,12 +47,24 @@ local_otp_app(Name, Version) ->
 local(Name, Version) ->
     purl(["generic", string:lowercase(to_list(Name))], to_list(Version)).
 
-otp_runtime(Name, Version) ->
-    purl(["otp", string:lowercase(to_list(Name))], to_list(Version)).
+otp_runtime(Name, Version, RepositoryUrl) ->
+    purl_with_qualifiers(
+        ["otp", string:lowercase(to_list(Name))],
+        to_list(Version),
+        [{"repository_url", to_list(RepositoryUrl)},
+         {"vcs_url", "git+" ++ to_list(RepositoryUrl) ++ ".git"}]
+    ).
 
 purl(PathSegments, Version) ->
     Path = lists:join("/", [escape(Segment) || Segment <- PathSegments]),
     unicode:characters_to_binary(io_lib:format("pkg:~s@~s", [Path, escape(Version)])).
+
+purl_with_qualifiers(PathSegments, Version, Qualifiers) ->
+    Path = lists:join("/", [escape(Segment) || Segment <- PathSegments]),
+    QS = lists:join("&", [escape(K) ++ "=" ++ escape(V) || {K, V} <- Qualifiers]),
+    unicode:characters_to_binary(
+        io_lib:format("pkg:~s@~s?~s", [Path, escape(Version), QS])
+    ).
 
 -if(?OTP_RELEASE >= 25).
 

@@ -96,9 +96,14 @@ local_purl_test(_) ->
     ?assertEqual(<<"pkg:generic/local-app@0.9.0">>, Purl).
 
 otp_runtime_purl_test(_) ->
-    Purl = rebar3_sbom_purl:otp_runtime(<<"erlang/otp">>, <<"28">>),
-    ?assertEqual(<<"pkg:otp/erlang%2Fotp@28">>, Purl),
-    ErtsPurl = rebar3_sbom_purl:otp_runtime(<<"erts">>, <<"15.2">>),
-    ?assertEqual(<<"pkg:otp/erts@15.2">>, ErtsPurl),
-    KernelPurl = rebar3_sbom_purl:otp_runtime(<<"kernel">>, <<"10.2">>),
-    ?assertEqual(<<"pkg:otp/kernel@10.2">>, KernelPurl).
+    GH = <<"https://github.com/erlang/otp">>,
+    Purl = rebar3_sbom_purl:otp_runtime(<<"erlang/otp">>, <<"28">>, GH),
+    ?assertMatch(<<"pkg:otp/erlang%2Fotp@28?repository_url=", _/binary>>, Purl),
+    %% Verify repository_url and vcs_url qualifiers are present
+    PurlStr = binary_to_list(Purl),
+    ?assertNotEqual(nomatch, string:find(PurlStr, "repository_url=")),
+    ?assertNotEqual(nomatch, string:find(PurlStr, "vcs_url=")),
+    ErtsPurl = rebar3_sbom_purl:otp_runtime(<<"erts">>, <<"15.2">>, GH),
+    ?assertMatch(<<"pkg:otp/erts@15.2?repository_url=", _/binary>>, ErtsPurl),
+    KernelPurl = rebar3_sbom_purl:otp_runtime(<<"kernel">>, <<"10.2">>, GH),
+    ?assertMatch(<<"pkg:otp/kernel@10.2?repository_url=", _/binary>>, KernelPurl).

@@ -30,7 +30,7 @@ otp_component(OtpRelease) ->
     [
         {name, Name},
         {version, Version},
-        {purl, rebar3_sbom_purl:otp_runtime(Name, Version)},
+        {purl, rebar3_sbom_purl:otp_runtime(Name, Version, ?OTP_GITHUB)},
         {cpe, rebar3_sbom_cpe:cpe(Name, Version, ?OTP_GITHUB)},
         {authors, []},
         {description, <<"Erlang/OTP">>},
@@ -47,7 +47,7 @@ erts_component(ErtsVersion, OtpRelease) ->
     [
         {name, Name},
         {version, Version},
-        {purl, rebar3_sbom_purl:otp_runtime(Name, Version)},
+        {purl, rebar3_sbom_purl:otp_runtime(Name, Version, ?OTP_GITHUB)},
         {cpe, rebar3_sbom_cpe:cpe(<<"erlang/otp">>, list_to_binary(OtpRelease), ?OTP_GITHUB)},
         {authors, []},
         {description, <<"Erlang Runtime System">>},
@@ -78,7 +78,7 @@ app_component(App, OtpRelease) ->
     [
         {name, Name},
         {version, Version},
-        {purl, rebar3_sbom_purl:otp_runtime(Name, Version)},
+        {purl, rebar3_sbom_purl:otp_runtime(Name, Version, ?OTP_GITHUB)},
         {cpe, rebar3_sbom_cpe:cpe(<<"erlang/otp">>, list_to_binary(OtpRelease), ?OTP_GITHUB)},
         {authors, []},
         {description, Description},
