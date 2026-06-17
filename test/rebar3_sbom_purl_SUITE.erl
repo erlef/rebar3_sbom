@@ -47,7 +47,8 @@ git_github_variants_test(_) ->
     Urls = [
         "git@github.com:ExampleOrg/ExampleRepo.git",
         "https://github.com/ExampleOrg/ExampleRepo.git",
-        "git://github.com/ExampleOrg/ExampleRepo.git"
+        "git://github.com/ExampleOrg/ExampleRepo.git",
+        "ssh://git@github.com/ExampleOrg/ExampleRepo.git"
     ],
     lists:foreach(
         fun(Url) ->

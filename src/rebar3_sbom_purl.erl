@@ -22,6 +22,9 @@ git(_Name, "https://github.com/" ++ Github, Ref) ->
 git(_Name, "git://github.com/" ++ Github, Ref) ->
     Repo = string:replace(Github, ".git", "", trailing),
     github(Repo, Ref);
+git(_Name, "ssh://git@github.com/" ++ Github, Ref) ->
+    Repo = string:replace(Github, ".git", "", trailing),
+    github(Repo, Ref);
 git(_Name, "git@bitbucket.org:" ++ Github, Ref) ->
     Repo = string:replace(Github, ".git", "", trailing),
     bitbucket(Repo, Ref);
