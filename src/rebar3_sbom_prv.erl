@@ -405,13 +405,14 @@ get_github_license(Org, Repo) ->
                     {error, body}
             end;
         {ok, {404, _ReplyHeaders, _Body}} ->
-            rebar_api:info(
-                "Getting license info from github failed, maybe license info is missing in repository.~nRepository: ~p~n",
+            rebar_api:error(
+                "Fetching license info from github failed, maybe the repository doesn't exist,~n"
+                "isn't accessible, or license info is missing in the repository.~nRepository: ~p~n",
                 [URIStr]
             ),
             {error, request};
         _Other ->
-            rebar_api:info("Getting license info from github failed.~nRepository: ~p~n", [URIStr]),
+            rebar_api:error("Fetching license info from github failed.~nRepository: ~p~n", [URIStr]),
             {error, request}
     end.
 
@@ -443,8 +444,15 @@ set_httpc_proxy(Profile) ->
     Options =
         format_option(proxy, HttpProxy, NoProxy) ++
             format_option(https_proxy, HttpsProxy, NoProxy),
-    httpc:set_options(Options, Profile).
+    case Options of
+        [] ->
+            ok;
+        Opts ->
+            httpc:set_options(Opts, Profile)
+    end.
 
+format_option(_Option, undefined, _NoProxy) ->
+    [];
 format_option(Option, Url, NoProxy) ->
     case uri_string:parse(Url) of
         #{host := Host, port := Port} ->
@@ -452,6 +460,7 @@ format_option(Option, Url, NoProxy) ->
         #{host := Host} ->
             [{Option, {{Host, 8080}, NoProxy}}];
         _Other ->
+            rebar_api:error("Invalid proxy URL ~s for ~s~n", [Url, Option]),
             []
     end.
 
@@ -460,7 +469,7 @@ get_proxy(ProxyString) ->
         false ->
             case os:getenv(string:uppercase(ProxyString)) of
                 false ->
-                    "";
+                    undefined;
                 Url ->
                     Url
             end;
@@ -486,12 +495,6 @@ parse_no_proxy(NPString) ->
     RawTokens = string:lexemes(NPString, ","),
     lists:map(fun(Token) -> format_entry(string:trim(Token)) end, RawTokens).
 
-%% Translate CIDR notation to httpc string prefix format
-format_entry("127.0.0.0/8") -> "127.";
-format_entry("10.0.0.0/8") -> "10.";
-%% Simplification: covers 172.16.*
-format_entry("172.16.0.0/12") -> "172.16";
-format_entry("192.168.0.0/16") -> "192.168.";
 %% Translate standard .domain to httpc *.domain format
 format_entry([$. | Domain]) -> "*." ++ Domain;
 %% Keep regular hostnames and raw IPs unchanged
