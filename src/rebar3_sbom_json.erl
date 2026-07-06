@@ -145,7 +145,7 @@ dependency_to_json(D) ->
 bin(undefined) ->
     undefined;
 bin(Value) when is_list(Value) ->
-    erlang:list_to_binary(Value);
+    unicode:characters_to_binary(Value);
 bin(Value) ->
     Value.
 
@@ -232,6 +232,6 @@ json_to_external_reference(#{<<"type">> := Type, <<"url">> := Url}) ->
 str(undefined) ->
     undefined;
 str(Value) when is_binary(Value) ->
-    erlang:binary_to_list(Value);
+    unicode:characters_to_list(Value);
 str(Value) ->
     Value.

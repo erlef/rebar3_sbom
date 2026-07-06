@@ -130,13 +130,15 @@ component_field(external_references = Field, RawComponent) ->
 component_field(Field, RawComponent) ->
     case proplists:get_value(Field, RawComponent) of
         Value when is_binary(Value) ->
-            binary:bin_to_list(Value);
+            unicode:characters_to_list(Value);
+        Value when is_list(Value) ->
+            unicode:characters_to_list(Value);
         Else ->
             Else
     end.
 
 license(Name) when is_binary(Name) ->
-    license(binary:bin_to_list(Name));
+    license(unicode:characters_to_list(Name));
 license(Name) ->
     case rebar3_sbom_license:spdx_id(Name) of
         undefined ->

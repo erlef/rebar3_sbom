@@ -65,8 +65,10 @@ cpe(<<"elixir">>, Version, _) ->
 cpe(_Name, _Version, undefined) ->
     undefined;
 cpe(Name, Version, Url) ->
-    Organization = github_url(Url),
-    build_cpe(Organization, Name, Version).
+    case github_url(Url) of
+        undefined -> undefined;
+        Organization -> build_cpe(Organization, Name, Version)
+    end.
 
 %--- Private -------------------------------------------------------------------
 
@@ -78,7 +80,9 @@ github_url(<<"https://github.com/", Rest/bitstring>>) ->
     Organization;
 github_url(<<"git@github.com:", Rest/bitstring>>) ->
     [Organization | _] = string:split(Rest, "/"),
-    Organization.
+    Organization;
+github_url(_) ->
+    undefined.
 
 -spec build_cpe(Organization, Name, Version) -> CPE when
     Organization :: bitstring(),

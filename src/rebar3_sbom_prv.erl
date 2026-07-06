@@ -45,7 +45,9 @@ init(State) ->
                 "overwite existing files without prompting for confirmation"},
             {strict_version, $V, "strict_version", {boolean, true},
                 "modify the version number of the BoM only when the content changes"},
-            {author, $a, "author", string, "the author of the SBoM"}
+            {author, $a, "author", string, "the author of the SBoM"},
+            {include_otp, undefined, "include-otp", {boolean, false},
+                "include OTP/ERTS runtime components in the SBoM"}
         ]},
         {short_desc, "Generates CycloneDX SBoM"},
         {desc, "Generates a Software Bill-of-Materials (SBoM) in CycloneDX format"}
@@ -71,15 +73,25 @@ do(State) ->
     PluginInfo = dep_info(Plugin),
     PluginDepsInfo = [dep_info(Dep) || Dep <- PluginDeps],
 
+    PluginOpts = rebar_state:get(State, rebar3_sbom, []),
+    IncludeOtp =
+        proplists:get_value(include_otp, Args) orelse
+            proplists:get_value(include_otp, PluginOpts, false),
+
     FilePath = filepath(Output, Format),
     DepsInfo = [dep_info(Dep) || Dep <- rebar_state:all_deps(State)],
+    OtpComponents =
+        case IncludeOtp of
+            true -> rebar3_sbom_otp:otp_components();
+            false -> []
+        end,
     AppInfo = dep_info(App),
     AppInfo2 = [{sha256, hash(AppInfo, rebar_dir:base_dir(State))} | AppInfo],
     MetadataInfo = metadata(State),
     SBoM = rebar3_sbom_cyclonedx:bom(
         {FilePath, Format},
         IsStrictVersion,
-        {AppInfo2, DepsInfo},
+        {AppInfo2, DepsInfo ++ OtpComponents},
         {PluginInfo, PluginDepsInfo},
         MetadataInfo
     ),
@@ -160,7 +172,7 @@ hex_metadata(Dep) ->
 
 hex_metadata_licenses(HexMetadata) ->
     HexMetadataLicenses = proplists:get_value(<<"licenses">>, HexMetadata, []),
-    [binary_to_list(HexMetadataLicense) || HexMetadataLicense <- HexMetadataLicenses].
+    [unicode:characters_to_list(HexMetadataLicense) || HexMetadataLicense <- HexMetadataLicenses].
 
 -spec get_github_link(HexMetadata, Links) -> binary() when
     HexMetadata :: [{binary(), binary()}],
@@ -170,7 +182,7 @@ get_github_link([], Links) ->
         undefined ->
             undefined;
         Value ->
-            list_to_binary(Value)
+            unicode:characters_to_binary(Value)
     end;
 get_github_link(HexMetadata, _) ->
     Links = proplists:get_value(<<"links">>, HexMetadata, []),
@@ -262,7 +274,7 @@ dep_info(_Name, _Version, {pkg, Name, Version, Sha256}, Common) ->
         {version, Version},
         {purl, rebar3_sbom_purl:hex(Name, Version)},
         {sha256, string:lowercase(Sha256)},
-        {cpe, rebar3_sbom_cpe:cpe(Name, list_to_binary(Version), GitHubLink)}
+        {cpe, rebar3_sbom_cpe:cpe(Name, unicode:characters_to_binary(Version), GitHubLink)}
         | Common
     ];
 dep_info(_Name, _Version, {pkg, Name, Version, _InnerChecksum, OuterChecksum, _RepoConf}, Common) ->
@@ -279,15 +291,13 @@ dep_info(Name, _DepVersion, {git, Git, GitRef}, Common) ->
     {Version, Purl, CPE} =
         case GitRef of
             {tag, Tag} ->
-                GeneratedCPE = rebar3_sbom_cpe:cpe(Name, list_to_binary(Tag), list_to_binary(Git)),
+                GeneratedCPE = rebar3_sbom_cpe:cpe(Name, to_binary(Tag), to_binary(Git)),
                 {Tag, rebar3_sbom_purl:git(Name, Git, Tag), GeneratedCPE};
             {branch, Branch} ->
-                GeneratedCPE = rebar3_sbom_cpe:cpe(
-                    Name, list_to_binary(Branch), list_to_binary(Git)
-                ),
+                GeneratedCPE = rebar3_sbom_cpe:cpe(Name, to_binary(Branch), to_binary(Git)),
                 {Branch, rebar3_sbom_purl:git(Name, Git, Branch), GeneratedCPE};
             {ref, Ref} ->
-                GeneratedCPE = rebar3_sbom_cpe:cpe(Name, list_to_binary(Ref), list_to_binary(Git)),
+                GeneratedCPE = rebar3_sbom_cpe:cpe(Name, to_binary(Ref), to_binary(Git)),
                 {Ref, rebar3_sbom_purl:git(Name, Git, Ref), GeneratedCPE}
         end,
     [
@@ -305,7 +315,7 @@ dep_info(Name, Version, checkout, Common) ->
         {name, Name},
         {version, Version},
         {purl, rebar3_sbom_purl:local_otp_app(Name, Version)},
-        {cpe, rebar3_sbom_cpe:cpe(Name, list_to_binary(Version), GitHubLink)}
+        {cpe, rebar3_sbom_cpe:cpe(Name, unicode:characters_to_binary(Version), GitHubLink)}
         | Common
     ];
 dep_info(Name, Version, root_app, Common) ->
@@ -315,7 +325,7 @@ dep_info(Name, Version, root_app, Common) ->
         {name, Name},
         {version, Version},
         {purl, Purl},
-        {cpe, rebar3_sbom_cpe:cpe(Name, list_to_binary(Version), GitHubLink)}
+        {cpe, rebar3_sbom_cpe:cpe(Name, unicode:characters_to_binary(Version), GitHubLink)}
         | Common
     ].
 
@@ -325,7 +335,7 @@ filepath(Path, _Format) ->
     Path.
 
 write_file(Filename, Contents, true) ->
-    file:write_file(Filename, Contents);
+    file:write_file(Filename, unicode:characters_to_binary(Contents));
 write_file(Filename, Xml, false) ->
     case file:read_file_info(Filename) of
         {error, enoent} ->
@@ -415,3 +425,7 @@ hash(AppInfo, BaseDir) ->
 tar_path(BaseDir, Name, Version) ->
     TarFilename = io_lib:format("~s-~s.tar.gz", [Name, Version]),
     filename:join([BaseDir, "rel", Name, TarFilename]).
+
+to_binary(V) when is_atom(V) -> atom_to_binary(V);
+to_binary(V) when is_list(V) -> unicode:characters_to_binary(V);
+to_binary(V) when is_binary(V) -> V.

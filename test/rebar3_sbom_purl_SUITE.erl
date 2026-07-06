@@ -15,6 +15,7 @@
 -export([git_unsupported_host_test/1]).
 -export([local_purl_test/1]).
 -export([local_otp_app_purl_test/1]).
+-export([otp_runtime_purl_test/1]).
 
 % Includes
 -include_lib("stdlib/include/assert.hrl").
@@ -30,7 +31,8 @@ all() ->
         git_bitbucket_variants_test,
         git_unsupported_host_test,
         local_otp_app_purl_test,
-        local_purl_test
+        local_purl_test,
+        otp_runtime_purl_test
     ].
 
 %--- Test cases ----------------------------------------------------------------
@@ -92,3 +94,16 @@ local_otp_app_purl_test(_) ->
 local_purl_test(_) ->
     Purl = rebar3_sbom_purl:local("Local-App", "0.9.0"),
     ?assertEqual(<<"pkg:generic/local-app@0.9.0">>, Purl).
+
+otp_runtime_purl_test(_) ->
+    GH = <<"https://github.com/erlang/otp">>,
+    Purl = rebar3_sbom_purl:otp_runtime(<<"erlang/otp">>, <<"28">>, GH),
+    ?assertMatch(<<"pkg:otp/erlang%2Fotp@28?repository_url=", _/binary>>, Purl),
+    %% Verify repository_url and vcs_url qualifiers are present
+    PurlStr = binary_to_list(Purl),
+    ?assertNotEqual(nomatch, string:find(PurlStr, "repository_url=")),
+    ?assertNotEqual(nomatch, string:find(PurlStr, "vcs_url=")),
+    ErtsPurl = rebar3_sbom_purl:otp_runtime(<<"erts">>, <<"15.2">>, GH),
+    ?assertMatch(<<"pkg:otp/erts@15.2?repository_url=", _/binary>>, ErtsPurl),
+    KernelPurl = rebar3_sbom_purl:otp_runtime(<<"kernel">>, <<"10.2">>, GH),
+    ?assertMatch(<<"pkg:otp/kernel@10.2?repository_url=", _/binary>>, KernelPurl).
