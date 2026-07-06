@@ -54,6 +54,11 @@ init(State) ->
 
 -spec do(rebar_state:t()) -> {ok, rebar_state:t()} | {error, string()}.
 do(State) ->
+    %% Create a httpc profile using proxy settings from the environment, if any
+    {ok, _Started} = application:ensure_all_started(inets),
+    {ok, _Pid} = inets:start(httpc, [{profile, rebar3_sbom}]),
+    ok = set_httpc_proxy(rebar3_sbom),
+
     {Args, _} = rebar_state:command_parsed_args(State),
     Format = proplists:get_value(format, Args),
     Output = proplists:get_value(output, Args),
@@ -76,6 +81,9 @@ do(State) ->
     AppInfo = dep_info(App),
     AppInfo2 = [{sha256, hash(AppInfo, rebar_dir:base_dir(State))} | AppInfo],
     MetadataInfo = metadata(State),
+
+    inets:stop(httpc, rebar3_sbom),
+
     SBoM = rebar3_sbom_cyclonedx:bom(
         {FilePath, Format},
         IsStrictVersion,
@@ -382,8 +390,13 @@ get_github_license(Org, Repo) ->
             host => <<"api.github.com">>
         },
     URIStr = uri_string:recompose(URI),
-    Headers = #{<<"user-agent">> => <<"rebar3">>},
-    case rebar_httpc_adapter:request(get, URIStr, Headers, undefined, #{}) of
+    BaseHeaders = #{<<"user-agent">> => <<"rebar3">>},
+    Headers =
+        case os:getenv("GITHUB_TOKEN") of
+            false -> BaseHeaders;
+            Token -> BaseHeaders#{<<"authorization">> => iolist_to_binary(["Bearer ", Token])}
+        end,
+    case rebar_httpc_adapter:request(get, URIStr, Headers, undefined, #{profile => rebar3_sbom}) of
         {ok, {200, _ReplyHeaders, Body}} ->
             case jsone:decode(Body) of
                 #{<<"license">> := #{<<"spdx_id">> := SPDX_Id}} ->
@@ -391,7 +404,15 @@ get_github_license(Org, Repo) ->
                 _ ->
                     {error, body}
             end;
-        _ ->
+        {ok, {404, _ReplyHeaders, _Body}} ->
+            rebar_api:error(
+                "Fetching license info from github failed, maybe the repository doesn't exist,~n"
+                "isn't accessible, or license info is missing in the repository.~nRepository: ~p~n",
+                [URIStr]
+            ),
+            {error, request};
+        _Other ->
+            rebar_api:error("Fetching license info from github failed.~nRepository: ~p~n", [URIStr]),
             {error, request}
     end.
 
@@ -415,3 +436,66 @@ hash(AppInfo, BaseDir) ->
 tar_path(BaseDir, Name, Version) ->
     TarFilename = io_lib:format("~s-~s.tar.gz", [Name, Version]),
     filename:join([BaseDir, "rel", Name, TarFilename]).
+
+set_httpc_proxy(Profile) ->
+    HttpProxy = get_proxy("http_proxy"),
+    HttpsProxy = get_proxy("https_proxy"),
+    NoProxy = get_no_proxy(),
+    Options =
+        format_option(proxy, HttpProxy, NoProxy) ++
+            format_option(https_proxy, HttpsProxy, NoProxy),
+    case Options of
+        [] ->
+            ok;
+        Opts ->
+            httpc:set_options(Opts, Profile)
+    end.
+
+format_option(_Option, undefined, _NoProxy) ->
+    [];
+format_option(Option, Url, NoProxy) ->
+    case uri_string:parse(Url) of
+        #{host := Host, port := Port} ->
+            [{Option, {{Host, Port}, NoProxy}}];
+        #{host := Host} ->
+            [{Option, {{Host, 8080}, NoProxy}}];
+        _Other ->
+            rebar_api:error("Invalid proxy URL ~s for ~s~n", [Url, Option]),
+            []
+    end.
+
+get_proxy(ProxyString) ->
+    case os:getenv(string:lowercase(ProxyString)) of
+        false ->
+            case os:getenv(string:uppercase(ProxyString)) of
+                false ->
+                    undefined;
+                Url ->
+                    Url
+            end;
+        Url ->
+            Url
+    end.
+
+get_no_proxy() ->
+    case os:getenv("no_proxy") of
+        false ->
+            case os:getenv("NO_PROXY") of
+                false ->
+                    ["localhost", "127.0.0.1"];
+                NP ->
+                    parse_no_proxy(NP)
+            end;
+        NP ->
+            parse_no_proxy(NP)
+    end.
+
+%% Splits comma-separated values and formats them for httpc
+parse_no_proxy(NPString) ->
+    RawTokens = string:lexemes(NPString, ","),
+    lists:map(fun(Token) -> format_entry(string:trim(Token)) end, RawTokens).
+
+%% Translate standard .domain to httpc *.domain format
+format_entry([$. | Domain]) -> "*." ++ Domain;
+%% Keep regular hostnames and raw IPs unchanged
+format_entry(Other) -> Other.
