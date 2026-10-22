@@ -6,6 +6,14 @@
 
 -include("rebar3_sbom.hrl").
 
+-moduledoc """
+Entry point for the Rebar3 SBoM plugin.
+Registers the `sbom` provider (see `m:rebar3_sbom_prv`).
+
+This module also exports the types used for CycloneDX SBoM structures
+(`sbom/0`, `component/0`, `metadata/0`, etc.) for use by other modules.
+""".
+
 -export([init/1]).
 
 -export_type([
@@ -30,6 +38,7 @@
 -type dependency() :: #dependency{}.
 -type sbom() :: #sbom{}.
 
+-doc "Registers the `sbom` provider with Rebar3.".
 -spec init(rebar_state:t()) -> {ok, rebar_state:t()}.
 init(State) ->
     {ok, State1} = rebar3_sbom_prv:init(State),
