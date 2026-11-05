@@ -1,3 +1,20 @@
 {
-  "enabledManagers": ["asdf"]
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "enabledManagers": [
+    "asdf",
+    "custom.regex"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update the ORT container image used for license scanning",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/part_licensing\\.yml$/"
+      ],
+      "matchStrings": [
+        "image:\\s*(?<depName>ghcr\\.io/oss-review-toolkit/ort):(?<currentValue>\\S+)"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ]
 }
