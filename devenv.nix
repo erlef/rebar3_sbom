@@ -3,10 +3,11 @@
 
 { pkgs, lib, config, inputs, ... }:
 let
-  pkgs-unstable = import inputs.nixpkgs-unstable {
-    system = pkgs.stdenv.system;
-    config.allowUnfree = true;
-  };
+  # The Sphinx man builder fails to produce the "man" output.
+  reuse = pkgs.reuse.overridePythonAttrs (old: {
+    outputs = [ "out" ];
+    dontUseSphinx = true;
+  });
 in
 {
   packages = with pkgs; [
@@ -18,8 +19,7 @@ in
 
   languages.erlang = {
     enable = true;
-    # Switch back to normal packages when Erlang 28.2 is available there
-    package = pkgs-unstable.beam28Packages.erlang;
+    package = pkgs.beam28Packages.erlang;
   };
 
   git-hooks.hooks = {
@@ -36,6 +36,10 @@ in
       entry = "rebar3 lint";
       files = "\\.(erl|hrl)$";
       pass_filenames = false;
+    };
+    reuse = {
+      enable = true;
+      package = reuse;
     };
   };
 }
