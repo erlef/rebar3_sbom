@@ -8,6 +8,13 @@
 
 % https://github.com/package-url/purl-spec
 
+-moduledoc """
+Builds [PURL](https://github.com/package-url/purl-spec) identifiers for SBoM
+components. Supports Hex, GitHub, Bitbucket, and local/OTP apps.
+
+Used by the provider when building components (see `m:rebar3_sbom_prv`).
+""".
+
 -export([hex/2, git/3, github/2, bitbucket/2, local_otp_app/2, local/2]).
 
 hex(Name, Version) ->
