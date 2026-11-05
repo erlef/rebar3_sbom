@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # SPDX-FileCopyrightText: 2025 Erlang Ecosystem Foundation
 
-rebar 3.25.1
+rebar 3.28.0
 erlang 28.2
