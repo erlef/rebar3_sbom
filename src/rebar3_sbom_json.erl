@@ -8,6 +8,8 @@
 
 -include("rebar3_sbom.hrl").
 
+-moduledoc "Encodes and decodes the SBoM to and from CycloneDX JSON.".
+
 -define(SCHEMA, <<"http://cyclonedx.org/schema/bom-1.6.schema.json">>).
 
 encode(SBoM) ->

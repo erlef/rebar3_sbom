@@ -5,6 +5,13 @@
 
 -export([spdx_id/1]).
 
+-moduledoc """
+Maps license strings (e.g. from Hex or `.app.src`) to SPDX license identifiers.
+
+Used when filling component and metadata licenses in the SBoM
+(see `m:rebar3_sbom_cyclonedx`).
+""".
+
 -define(SPDX_ID, #{
     "0bsd" => "0BSD",
     "aal" => "AAL",
@@ -408,6 +415,10 @@
     "zlib-acknowledgement" => "zlib-acknowledgement"
 }).
 
+-doc """
+Returns the SPDX license ID for a given string if known; otherwise the original
+string.
+""".
 spdx_id(Id) ->
     maps:get(normalize(Id), ?SPDX_ID, undefined).
 

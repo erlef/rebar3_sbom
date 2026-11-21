@@ -8,6 +8,8 @@
 -include("rebar3_sbom.hrl").
 -include_lib("xmerl/include/xmerl.hrl").
 
+-moduledoc "Encodes and decodes the SBoM to and from CycloneDX XML.".
+
 -define(XMLNS, "http://cyclonedx.org/schema/bom/1.6").
 -define(XMLNS_XSI, "http://www.w3.org/2001/XMLSchema-instance").
 -define(XSI_SCHEMA_LOC,

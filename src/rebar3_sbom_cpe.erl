@@ -8,6 +8,13 @@
 % Includes
 -include("rebar3_sbom.hrl").
 
+-moduledoc """
+Builds CPE (Common Platform Enumeration) identifiers for SBoM components. Uses
+the component name, version, and (for GitHub deps) vendor from the source URL.
+
+Used by the provider when building components (see `m:rebar3_sbom_prv`).
+""".
+
 %--- Macros --------------------------------------------------------------------
 -define(CPE_PREFIX, <<"cpe:", ?CPE_VERSION/binary>>).
 % Includes the fields:
@@ -28,6 +35,10 @@
 
 %--- API -----------------------------------------------------------------------
 
+-doc """
+Returns a CPE string for the component, or `undefined` if no GitHub URL
+for unknown names. CPE version is defined in `rebar3_sbom.hrl`.
+""".
 -spec cpe(Name, Version, Url) -> CPE when
     Name :: bitstring(),
     Version :: bitstring(),
